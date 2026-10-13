@@ -1,5 +1,6 @@
-google-adk>=2.2.0
-mcp>=1.0.0
-elasticsearch>=8.13.0
-python-dotenv>=1.0.0
-uvicorn>=0.30.0
+# Runtime dependencies, pinned to the versions the project is tested with.
+google-adk==2.2.0
+mcp==1.27.2
+elasticsearch==9.4.1
+python-dotenv==1.2.2
+uvicorn==0.49.0

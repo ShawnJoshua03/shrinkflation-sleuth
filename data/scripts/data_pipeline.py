@@ -30,6 +30,7 @@ OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "processed")
 #             date_changed, source, retailer)
 # A new_size equal to old_size means no shrinkflation (control products).
 # ---------------------------------------------------------------------------
+# fmt: off
 SEED = [
     # --- Snacks (Frito-Lay / PepsiCo) ---
     ("doritos-nacho-001", "Doritos Nacho Cheese Tortilla Chips", "Frito-Lay", "Snacks", "Chips", "oz", 9.75, 9.25, 4.99, 4.99, "2022-03-15", "FullCarts.org", "Kroger"),
@@ -79,6 +80,7 @@ SEED = [
     ("breyers-natural-001", "Breyers Natural Vanilla", "Unilever", "Frozen & Dairy", "Ice Cream", "fl oz", 48.0, 48.0, 5.49, 5.49, "2024-01-01", "catalog", "Kroger"),
     ("chobani-flip-001", "Chobani Flip Greek Yogurt", "Chobani", "Frozen & Dairy", "Yogurt", "oz", 5.3, 4.5, 1.79, 1.79, "2023-12-04", "r/shrinkflation", "Kroger"),
 ]
+# fmt: on
 
 
 def shrinkage_pct(old_size, new_size):
@@ -132,31 +134,45 @@ def build_datasets(seed=SEED):
     products, history, alerts = [], [], []
     cat_stats = defaultdict(lambda: {"total": 0, "affected": 0, "shrink": []})
 
-    for (pid, name, brand, cat, subcat, unit, old_size, new_size,
-         old_price, new_price, date_changed, source, retailer) in seed:
-
+    for (
+        pid,
+        name,
+        brand,
+        cat,
+        subcat,
+        unit,
+        old_size,
+        new_size,
+        old_price,
+        new_price,
+        date_changed,
+        source,
+        retailer,
+    ) in seed:
         shrunk = new_size < old_size
         shrink_pct = shrinkage_pct(old_size, new_size)
         new_ppu = price_per_unit(new_price, new_size)
         eff_increase = effective_price_increase_pct(old_price, old_size, new_price, new_size)
 
-        products.append({
-            "product_id": pid,
-            "name": name,
-            "brand": brand,
-            "category": cat,
-            "subcategory": subcat,
-            "upc": make_upc(pid),
-            "current_size": new_size,
-            "current_size_unit": unit,
-            "current_price": new_price,
-            "price_per_unit": new_ppu,
-            "description": f"{name} sold at {retailer}. Category: {cat} / {subcat}.",
-            "image_url": "",
-            "retailer": retailer,
-            "last_updated": "2026-06-01",
-            "shrinkflation_flag": shrunk,
-        })
+        products.append(
+            {
+                "product_id": pid,
+                "name": name,
+                "brand": brand,
+                "category": cat,
+                "subcategory": subcat,
+                "upc": make_upc(pid),
+                "current_size": new_size,
+                "current_size_unit": unit,
+                "current_price": new_price,
+                "price_per_unit": new_ppu,
+                "description": f"{name} sold at {retailer}. Category: {cat} / {subcat}.",
+                "image_url": "",
+                "retailer": retailer,
+                "last_updated": "2026-06-01",
+                "shrinkflation_flag": shrunk,
+            }
+        )
 
         # History: 2 records at old size, change, 2 records at new size
         recs = [
@@ -170,44 +186,48 @@ def build_datasets(seed=SEED):
         for i, (d, size, price) in enumerate(recs):
             size_chg = round((size - prev_size) / prev_size * 100, 1) if prev_size else 0.0
             price_chg = round((price - prev_price) / prev_price * 100, 1) if prev_price else 0.0
-            history.append({
-                "record_id": f"{pid}-h{i+1}",
-                "product_id": pid,
-                "name": name,
-                "brand": brand,
-                "category": cat,
-                "size": size,
-                "size_unit": unit,
-                "price": price,
-                "price_per_unit": price_per_unit(price, size),
-                "record_date": d,
-                "source": source if d == date_changed else "retail price capture",
-                "retailer": retailer,
-                "size_change_pct": size_chg,
-                "price_change_pct": price_chg,
-            })
+            history.append(
+                {
+                    "record_id": f"{pid}-h{i + 1}",
+                    "product_id": pid,
+                    "name": name,
+                    "brand": brand,
+                    "category": cat,
+                    "size": size,
+                    "size_unit": unit,
+                    "price": price,
+                    "price_per_unit": price_per_unit(price, size),
+                    "record_date": d,
+                    "source": source if d == date_changed else "retail price capture",
+                    "retailer": retailer,
+                    "size_change_pct": size_chg,
+                    "price_change_pct": price_chg,
+                }
+            )
             prev_size, prev_price = size, price
 
         if shrunk:
-            alerts.append({
-                "alert_id": f"alert-{pid}",
-                "product_id": pid,
-                "product_name": name,
-                "brand": brand,
-                "category": cat,
-                "old_size": old_size,
-                "new_size": new_size,
-                "size_unit": unit,
-                "shrinkage_pct": shrink_pct,
-                "old_price": old_price,
-                "new_price": new_price,
-                "effective_price_increase_pct": eff_increase,
-                "date_detected": date_changed,
-                "date_changed": date_changed,
-                "source": source,
-                "severity": severity(shrink_pct),
-                "verified": source != "r/shrinkflation",
-            })
+            alerts.append(
+                {
+                    "alert_id": f"alert-{pid}",
+                    "product_id": pid,
+                    "product_name": name,
+                    "brand": brand,
+                    "category": cat,
+                    "old_size": old_size,
+                    "new_size": new_size,
+                    "size_unit": unit,
+                    "shrinkage_pct": shrink_pct,
+                    "old_price": old_price,
+                    "new_price": new_price,
+                    "effective_price_increase_pct": eff_increase,
+                    "date_detected": date_changed,
+                    "date_changed": date_changed,
+                    "source": source,
+                    "severity": severity(shrink_pct),
+                    "verified": source != "r/shrinkflation",
+                }
+            )
 
         cat_stats[cat]["total"] += 1
         if shrunk:
@@ -217,15 +237,17 @@ def build_datasets(seed=SEED):
     categories = []
     for i, (cat, s) in enumerate(sorted(cat_stats.items()), 1):
         avg = round(sum(s["shrink"]) / len(s["shrink"]), 1) if s["shrink"] else 0.0
-        categories.append({
-            "category_id": f"cat-{i:03d}",
-            "category_name": cat,
-            "parent_category": "Grocery",
-            "avg_shrinkage_pct": avg,
-            "total_products": s["total"],
-            "affected_products": s["affected"],
-            "shrinkflation_rate": round(s["affected"] / s["total"], 2),
-        })
+        categories.append(
+            {
+                "category_id": f"cat-{i:03d}",
+                "category_name": cat,
+                "parent_category": "Grocery",
+                "avg_shrinkage_pct": avg,
+                "total_products": s["total"],
+                "affected_products": s["affected"],
+                "shrinkflation_rate": round(s["affected"] / s["total"], 2),
+            }
+        )
 
     return {
         "products.json": products,
