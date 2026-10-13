@@ -1,0 +1,19 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/shrinkflation-sleuth", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "gcr.io/$PROJECT_ID/shrinkflation-sleuth"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - shrinkflation-sleuth
+      - --image=gcr.io/$PROJECT_ID/shrinkflation-sleuth
+      - --region=us-central1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-env-vars=GOOGLE_GENAI_USE_VERTEXAI=TRUE,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=us-central1
+      - --set-secrets=ES_URL=es-url:latest,ES_API_KEY=es-api-key:latest,ELASTIC_MCP_URL=elastic-mcp-url:latest
+images:
+  - gcr.io/$PROJECT_ID/shrinkflation-sleuth

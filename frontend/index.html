@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shrinkflation Sleuth — Know what you're really paying for</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F6F1;
+    --ink:#16140F;
+    --stamp:#C8102E;
+    --tag:#FFD23F;
+    --rule:#D8D5CB;
+    --dim:#6E6A5E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Archivo',system-ui,sans-serif;
+    line-height:1.55;
+  }
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+
+  header{padding:20px 0;border-bottom:1.5px solid var(--ink)}
+  header .wrap{display:flex;justify-content:space-between;align-items:center}
+  .logo{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.05rem;letter-spacing:.02em}
+  .logo span{color:var(--stamp)}
+  nav a{color:var(--ink);text-decoration:none;font-size:.9rem;margin-left:22px;border-bottom:1.5px solid transparent}
+  nav a:hover, nav a:focus-visible{border-bottom-color:var(--stamp);outline:none}
+
+  /* Hero: a thermal receipt that tells the story */
+  .hero{padding:72px 0 56px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
+  h1{font-weight:800;font-size:clamp(2.1rem,5vw,3.4rem);line-height:1.05;letter-spacing:-.02em}
+  h1 em{font-style:normal;background:var(--tag);padding:0 .12em}
+  .lede{margin-top:18px;font-size:1.05rem;color:var(--dim);max-width:46ch}
+  .cta-row{margin-top:28px;display:flex;gap:14px;flex-wrap:wrap}
+  .btn{display:inline-block;text-decoration:none;font-family:'IBM Plex Mono',monospace;font-weight:700;
+       padding:13px 22px;border:2px solid var(--ink);color:var(--ink);background:var(--paper)}
+  .btn.primary{background:var(--ink);color:var(--paper)}
+  .btn:hover, .btn:focus-visible{background:var(--stamp);border-color:var(--stamp);color:#fff;outline:none}
+
+  .receipt{
+    background:#fff;border:1px solid var(--rule);
+    box-shadow:6px 6px 0 rgba(22,20,15,.12);
+    padding:26px 24px 34px;
+    font-family:'IBM Plex Mono',monospace;font-size:.85rem;
+    position:relative;max-width:340px;justify-self:center;width:100%;
+  }
+  .receipt::after{ /* perforated bottom edge */
+    content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;
+    background:radial-gradient(circle at 8px -2px, transparent 7px, #fff 7px) repeat-x;
+    background-size:16px 8px;
+  }
+  .receipt h2{font-size:.85rem;text-align:center;letter-spacing:.18em;font-weight:700}
+  .receipt .sub{text-align:center;color:var(--dim);font-size:.72rem;margin-bottom:14px}
+  .rline{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--rule)}
+  .rline .old{text-decoration:line-through;color:var(--dim)}
+  .rline.total{border-bottom:none;border-top:2px solid var(--ink);margin-top:8px;padding-top:8px;font-weight:700}
+  .stamp{
+    position:absolute;top:42%;left:50%;
+    transform:translate(-50%,-50%) rotate(-12deg);
+    border:3px solid var(--stamp);color:var(--stamp);
+    font-weight:700;letter-spacing:.14em;font-size:.95rem;
+    padding:6px 14px;opacity:.92;background:rgba(255,255,255,.7);
+    animation:stamp .5s cubic-bezier(.2,1.6,.4,1) .6s both;
+  }
+  @keyframes stamp{from{transform:translate(-50%,-50%) rotate(-12deg) scale(2.6);opacity:0}
+                   to{transform:translate(-50%,-50%) rotate(-12deg) scale(1);opacity:.92}}
+  @media (prefers-reduced-motion: reduce){.stamp{animation:none}}
+
+  section{padding:56px 0;border-top:1.5px solid var(--ink)}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:.75rem;letter-spacing:.2em;
+          text-transform:uppercase;color:var(--stamp);margin-bottom:14px}
+  h3{font-size:1.5rem;font-weight:800;margin-bottom:10px}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1.5px solid var(--ink)}
+  .stat{padding:22px;border-right:1.5px solid var(--ink)}
+  .stat:last-child{border-right:none}
+  .stat b{display:block;font-family:'IBM Plex Mono',monospace;font-size:2rem;font-weight:700}
+  .stat span{font-size:.85rem;color:var(--dim)}
+
+  .queries{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
+  .q{border:1px solid var(--rule);background:#fff;padding:16px 18px}
+  .q .ask{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:.9rem}
+  .q .ask::before{content:"$ ";color:var(--stamp)}
+  .q p{font-size:.82rem;color:var(--dim);margin-top:6px}
+
+  .flow{font-family:'IBM Plex Mono',monospace;font-size:.85rem;background:#fff;
+        border:1px solid var(--rule);padding:20px;overflow-x:auto;margin-top:20px;white-space:pre}
+
+  footer{border-top:1.5px solid var(--ink);padding:26px 0;font-size:.8rem;color:var(--dim)}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+  @media (max-width:760px){
+    .hero{grid-template-columns:1fr;padding-top:48px}
+    .stats{grid-template-columns:1fr}
+    .stat{border-right:none;border-bottom:1.5px solid var(--ink)}
+    .stat:last-child{border-bottom:none}
+    .queries{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">SHRINKFLATION<span>_</span>SLEUTH 🔍</div>
+    <nav>
+      <a href="#how">How it works</a>
+      <a href="#ask">What to ask</a>
+      <a href="/dev-ui/" class="mono">Open the agent →</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <h1>Same price.<br>Smaller bag.<br><em>Now you'll know.</em></h1>
+      <p class="lede">Shrinkflation Sleuth is an AI agent that searches a product
+        database of documented size changes, computes the price-per-ounce you're
+        actually paying, and gives you a verdict — with sources.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="/dev-ui/">Ask the Sleuth</a>
+        <a class="btn" href="https://github.com/" rel="noopener">View on GitHub</a>
+      </div>
+    </div>
+
+    <div class="receipt" aria-label="Example receipt showing a shrinkflation detection">
+      <h2>SLEUTH REPORT</h2>
+      <div class="sub">DORITOS NACHO CHEESE · KROGER</div>
+      <div class="rline"><span>SIZE</span><span><span class="old">9.75 OZ</span> 9.25 OZ</span></div>
+      <div class="rline"><span>PRICE</span><span>$4.99 → $4.99</span></div>
+      <div class="rline"><span>PER OZ</span><span><span class="old">$0.51</span> $0.54</span></div>
+      <div class="rline"><span>SOURCE</span><span>FULLCARTS ✅</span></div>
+      <div class="rline total"><span>HIDDEN INCREASE</span><span>+5.4%</span></div>
+      <div class="stamp">SHRINKFLATION</div>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap">
+      <div class="kicker">Why it matters</div>
+      <div class="stats">
+        <div class="stat"><b>33%</b><span>of grocery items affected by shrinkflation (Capital One Shopping, 2025)</span></div>
+        <div class="stat"><b>75%</b><span>of Americans have noticed it — but can't quantify the impact</span></div>
+        <div class="stat"><b>48%</b><span>of shoppers have abandoned a brand because of it</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ask">
+    <div class="wrap">
+      <div class="kicker">What to ask</div>
+      <h3>Six investigations, one agent</h3>
+      <div class="queries">
+        <div class="q"><div class="ask">Has my Doritos bag gotten smaller?</div><p>Product lookup — size history, price-per-unit trend, verdict.</p></div>
+        <div class="q"><div class="ask">Show me all shrinkflation from Frito-Lay</div><p>Brand investigation — ranked scorecard via ES|QL aggregation.</p></div>
+        <div class="q"><div class="ask">Which category has the worst shrinkflation?</div><p>Category analysis — averages, worst offenders, examples.</p></div>
+        <div class="q"><div class="ask">Check these: Doritos, Charmin, Tide, Oreos</div><p>Shopping list audit — report card with total hidden cost.</p></div>
+        <div class="q"><div class="ask">What are the worst trends this year?</div><p>Trend dashboard — top events and year-over-year shifts.</p></div>
+        <div class="q"><div class="ask">What data do you have?</div><p>Data discovery — the agent inspects its own indices live.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="kicker">How it works</div>
+      <h3>Gemini plans. Elasticsearch answers.</h3>
+      <p style="max-width:60ch;color:var(--dim)">Built with Gemini 2.0 Flash on Google ADK,
+        connected to Elasticsearch through the official Elastic MCP server. Every answer
+        is a multi-step mission: discover the data, search the catalog, run ES|QL
+        analytics, cross-check verified alerts, then report.</p>
+      <div class="flow">USER ──► GEMINI 2.0 FLASH (ADK agent)
+              │ plans steps, picks tools
+              ▼
+      ELASTIC MCP SERVER
+      ├─ search          find the product
+      ├─ esql            price-per-unit analytics
+      ├─ list_indices    discover data
+      ├─ get_mappings    understand schema
+      └─ get_shards      verify data health
+              │
+              ▼
+      ELASTICSEARCH  (products · product_history · shrinkflation_alerts · categories)</div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Built for the Google Cloud Rapid Agent Hackathon · Elastic Track · 2026</span>
+    <span class="mono">because you deserve to know what you're paying for</span>
+  </div>
+</footer>
+
+</body>
+</html>
