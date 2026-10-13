@@ -9,7 +9,7 @@ esql, get_shards).
 Run locally:
     adk web agents/          # from repo root, then pick shrinkflation_sleuth
 Deploy:
-    see Dockerfile + agent/main.py (FastAPI app for Cloud Run)
+    see Dockerfile + main.py (FastAPI app for Cloud Run)
 """
 
 import os
@@ -24,7 +24,9 @@ from google.adk.tools.mcp_tool.mcp_session_manager import (
 )
 from mcp import StdioServerParameters
 
-GEMINI_MODEL = "gemini-2.0-flash-001"
+# gemini-2.0-flash (used at the hackathon) has been retired; override with
+# GEMINI_MODEL if this default is retired too.
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
 ELASTIC_MCP_TOOLS = ["list_indices", "get_mappings", "search", "esql", "get_shards"]
 
@@ -33,10 +35,10 @@ def _elastic_mcp_toolset() -> McpToolset:
     """Connect to the Elastic MCP server.
 
     Two supported modes:
-    1. HTTP (recommended for Cloud Run): run the MCP server container as a
-       sidecar / separate service and set ELASTIC_MCP_URL.
-    2. stdio (local dev): spawn the official Docker image directly.
-       Requires Docker plus ES_URL / ES_API_KEY in the environment.
+    1. HTTP (recommended for Cloud Run): run the official Elastic MCP server
+       image as a separate service and set ELASTIC_MCP_URL.
+    2. stdio (local dev): spawn es_mcp_server.py, a small Python server that
+       exposes the same five tools. Requires ES_URL / ES_API_KEY.
     """
     mcp_url = os.environ.get("ELASTIC_MCP_URL")
     if mcp_url:
@@ -45,12 +47,12 @@ def _elastic_mcp_toolset() -> McpToolset:
             tool_filter=ELASTIC_MCP_TOOLS,
         )
 
-    _server = Path(__file__).parent / "es_mcp_server.py"
+    server = Path(__file__).parent / "es_mcp_server.py"
     return McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
                 command=sys.executable,
-                args=[str(_server)],
+                args=[str(server)],
                 env={
                     "ES_URL": os.environ.get("ES_URL", ""),
                     "ES_API_KEY": os.environ.get("ES_API_KEY", ""),
