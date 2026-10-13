@@ -17,6 +17,7 @@ Outputs:
     data/processed/categories.json
 """
 
+import hashlib
 import json
 import os
 from collections import defaultdict
@@ -80,12 +81,40 @@ SEED = [
 ]
 
 
+def shrinkage_pct(old_size, new_size):
+    """Percent of the package that disappeared (0.0 if it did not shrink)."""
+    if new_size >= old_size:
+        return 0.0
+    return round((old_size - new_size) / old_size * 100, 1)
+
+
+def price_per_unit(price, size):
+    return round(price / size, 4)
+
+
+def effective_price_increase_pct(old_price, old_size, new_price, new_size):
+    """Percent change in price-per-unit — the increase shrinkflation hides."""
+    old_ppu = price_per_unit(old_price, old_size)
+    new_ppu = price_per_unit(new_price, new_size)
+    return round((new_ppu - old_ppu) / old_ppu * 100, 1)
+
+
 def severity(shrink_pct):
     if shrink_pct >= 15:
         return "high"
     if shrink_pct >= 7:
         return "medium"
     return "low"
+
+
+def make_upc(product_id):
+    """Stable 12-digit placeholder UPC derived from the product id.
+
+    Uses SHA-256 rather than hash(), which is salted per process and made
+    the generated dataset differ on every run.
+    """
+    digest = int(hashlib.sha256(product_id.encode("utf-8")).hexdigest(), 16)
+    return f"0{digest % 10**11:011d}"
 
 
 def year_before(date_str, years=1):
@@ -98,18 +127,18 @@ def year_after(date_str, years=1):
     return f"{int(y) + years}-{rest}"
 
 
-def build():
+def build_datasets(seed=SEED):
+    """Return {filename: records} for the four index datasets."""
     products, history, alerts = [], [], []
     cat_stats = defaultdict(lambda: {"total": 0, "affected": 0, "shrink": []})
 
     for (pid, name, brand, cat, subcat, unit, old_size, new_size,
-         old_price, new_price, date_changed, source, retailer) in SEED:
+         old_price, new_price, date_changed, source, retailer) in seed:
 
         shrunk = new_size < old_size
-        shrink_pct = round((old_size - new_size) / old_size * 100, 1) if shrunk else 0.0
-        old_ppu = round(old_price / old_size, 4)
-        new_ppu = round(new_price / new_size, 4)
-        eff_increase = round((new_ppu - old_ppu) / old_ppu * 100, 1)
+        shrink_pct = shrinkage_pct(old_size, new_size)
+        new_ppu = price_per_unit(new_price, new_size)
+        eff_increase = effective_price_increase_pct(old_price, old_size, new_price, new_size)
 
         products.append({
             "product_id": pid,
@@ -117,7 +146,7 @@ def build():
             "brand": brand,
             "category": cat,
             "subcategory": subcat,
-            "upc": f"0{abs(hash(pid)) % 10**11:011d}",
+            "upc": make_upc(pid),
             "current_size": new_size,
             "current_size_unit": unit,
             "current_price": new_price,
@@ -150,7 +179,7 @@ def build():
                 "size": size,
                 "size_unit": unit,
                 "price": price,
-                "price_per_unit": round(price / size, 4),
+                "price_per_unit": price_per_unit(price, size),
                 "record_date": d,
                 "source": source if d == date_changed else "retail price capture",
                 "retailer": retailer,
@@ -198,16 +227,25 @@ def build():
             "shrinkflation_rate": round(s["affected"] / s["total"], 2),
         })
 
-    os.makedirs(OUT_DIR, exist_ok=True)
-    for fname, data in [("products.json", products),
-                        ("product_history.json", history),
-                        ("shrinkflation_alerts.json", alerts),
-                        ("categories.json", categories)]:
-        path = os.path.join(OUT_DIR, fname)
-        with open(path, "w") as f:
-            json.dump(data, f, indent=2)
-        print(f"wrote {fname}: {len(data)} records")
+    return {
+        "products.json": products,
+        "product_history.json": history,
+        "shrinkflation_alerts.json": alerts,
+        "categories.json": categories,
+    }
+
+
+def serialize(records):
+    return json.dumps(records, indent=2) + "\n"
+
+
+def main(out_dir=OUT_DIR):
+    os.makedirs(out_dir, exist_ok=True)
+    for fname, records in build_datasets().items():
+        with open(os.path.join(out_dir, fname), "w", encoding="utf-8", newline="\n") as f:
+            f.write(serialize(records))
+        print(f"wrote {fname}: {len(records)} records")
 
 
 if __name__ == "__main__":
-    build()
+    main()
