@@ -1,0 +1,17 @@
+.env
+.env.*
+.venv/
+venv/
+.git/
+.github/
+.claude/
+.claude-flow/
+.adk/
+*.db
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+_site/
+tests/
+docs/
+frontend/
