@@ -4,12 +4,12 @@
 
 `data/processed/` holds the four JSON datasets loaded into Elasticsearch:
 
-- **products.json** — 34 current catalog entries (12 brands, 7 categories)
+- **products.json** — 34 current catalog entries (16 brands, 7 categories)
 - **product_history.json** — 170 historical size/price records, ~5 per product, spanning 2019–2026, including the size-change event for each shrunk product
 - **shrinkflation_alerts.json** — 29 documented shrinkflation events with old/new sizes, computed shrinkage %, effective price-increase %, severity, and source attribution
 - **categories.json** — 7 category rollups (avg shrinkage, shrinkflation rate)
 
-All four are generated deterministically by `data/scripts/data_pipeline.py` from a curated seed table.
+All four are generated deterministically by `data/scripts/data_pipeline.py` from a curated seed table (`make data`); a test fails if the committed files drift from the pipeline output. The same files are served to the static Sleuth Explorer demo.
 
 ## Sources
 
@@ -26,7 +26,7 @@ Size-change events were curated from publicly documented shrinkflation reports:
 
 - Prices are representative retail prices at the time of the documented change, not a live feed. Price-per-unit math and shrinkage percentages are computed from the recorded sizes/prices.
 - History records between documented events are interpolated at the recorded size with small price drift, to give the agent a realistic time series to query.
-- This is a demo-scale dataset built for a 3-day hackathon; the pipeline is designed so larger feeds (Open Food Facts / Open Prices, retailer APIs) can be dropped into the same schema.
+- This is a demo-scale dataset built for a 3-day hackathon. UPCs are deterministic placeholders, not real product codes; the pipeline is designed so larger feeds (Open Food Facts / Open Prices, retailer APIs) can be dropped into the same schema.
 
 ## Rebuilding
 

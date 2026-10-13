@@ -1,4 +1,6 @@
-# Devpost submission draft
+# Devpost submission (original hackathon write-up)
+
+> Archived as submitted. The model has since changed (Gemini 2.0 Flash was retired) and the original Elastic Cloud deployment is offline; see the main README for the current state.
 
 **Project name:** Shrinkflation Sleuth
 **Tagline:** An AI agent that catches companies quietly shrinking your grocery products

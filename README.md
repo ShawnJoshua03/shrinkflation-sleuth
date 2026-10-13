@@ -1,106 +1,146 @@
 # Shrinkflation Sleuth 🔍
 
-**An AI agent that catches companies quietly shrinking your grocery products — powered by Elasticsearch and Gemini.**
+**An AI agent that catches companies quietly shrinking your groceries, and tells you what it's really costing you.**
 
-Built for the [Google Cloud Rapid Agent Hackathon](https://rapid-agent.devpost.com/) — Elastic Track.
+[![CI](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml/badge.svg)](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Live demo](https://img.shields.io/badge/live%20demo-GitHub%20Pages-C8102E.svg)](https://shawnjoshua03.github.io/shrinkflation-sleuth/)
 
-Shrinkflation is when companies reduce product sizes while keeping prices the same. It has affected roughly a third of grocery items and drove a meaningful share of grocery price inflation, yet there's no mainstream tool that lets a shopper ask *"Has my product shrunk?"* Shrinkflation Sleuth is that tool: a multi-step agent that searches a product database, analyzes price-per-unit trends with ES|QL, cross-checks verified shrinkflation events, and returns a sourced consumer report.
+### ▶ [Live demo](https://shawnjoshua03.github.io/shrinkflation-sleuth/)
 
-## What it can do
+[![Sleuth Explorer: product lookup showing the Doritos size cut and +5.4% hidden price increase](docs/img/explorer.png)](https://shawnjoshua03.github.io/shrinkflation-sleuth/#explorer)
 
-| Ask | What happens |
+Built in three days for the [Google Cloud Rapid Agent Hackathon](https://rapid-agent.devpost.com/) (Elastic track) with **Google ADK**, **Gemini**, **Elasticsearch** and the **Elastic MCP server**.
+
+---
+
+## The problem
+
+*Shrinkflation* is when a product gets smaller while the price stays the same. Capital One Shopping research estimates it has touched roughly a third of grocery items. Shoppers notice ("this bag feels lighter"), but nobody can easily answer the one question that matters: **how much more am I paying per ounce?**
+
+## The approach
+
+A multi-step agent that turns that hunch into a number with a source:
+
+1. **Find the product.** It runs a fuzzy full-text search over a product catalog in Elasticsearch.
+2. **Pull its size and price history.** It runs ES|QL and computes the price-per-unit at every point.
+3. **Cross-check documented events.** It looks up the size change and its source, and flags Reddit-only reports as unverified.
+4. **Report.** It returns the size change, the **effective price increase** (the change in price-per-unit, which is the number shrinkflation hides), a severity rating, a consumer tip and one suggested next check.
+
+The agent is a single Google ADK `LlmAgent` with six explicit **playbooks** in its instructions: product lookup, brand investigation, category analysis, shopping-list audit, trend dashboard and data discovery. Gemini picks the playbook for each question. All data access goes through the five read-only Elastic MCP tools: `search`, `esql`, `list_indices`, `get_mappings` and `get_shards`.
+
+### About the live demo
+
+The full agent needs an Elasticsearch cluster and a Gemini API key, neither of which can be hosted publicly for free. So the [live demo](https://shawnjoshua03.github.io/shrinkflation-sleuth/) is a **Sleuth Explorer**: it runs the same playbooks in your browser, without an LLM, over the **exact JSON documents** the agent queries. Each result panel shows the tool calls the agent makes for that question. It's a faithful view of the data and the logic. It is not a chat with the model. To run the real agent, see the [quickstart](#quickstart).
+
+## Results
+
+| | |
 |---|---|
-| "Has my Doritos bag gotten smaller?" | `search` products → `esql` size/price history → `search` verified alerts → verdict |
-| "Show me all shrinkflation from Frito-Lay" | brand scorecard via ES\|QL `STATS` aggregation, ranked by shrinkage |
-| "Which category has the worst shrinkflation?" | category aggregation + top offenders |
-| "Check these: Doritos, Charmin, Tide, Oreos" | shopping-list report card with total hidden cost |
-| "What are the worst trends this year?" | top 10 events + year-over-year ES\|QL trend |
-| "What data do you have?" | `list_indices` → `get_mappings` → counts (live data discovery) |
+| Dataset | 34 products · 16 brands · 7 categories · 170 history records · 29 documented size cuts (24 verified) · 5 unchanged control products |
+| Average hidden increase | **+12.2%** price-per-unit across the 29 size cuts (average shrinkage 10.2%) |
+| Worst case | Haribo Goldbears: 5 oz → 4 oz at the same $1.99, a **+25%** hidden increase |
+| Worst category (verified) | Frozen & Dairy, −14.3% average shrinkage (only 1 verified event). Beverages is next at −13.0% across 3 |
+| Tests | 35 pytest tests for the shrinkflation math, dataset invariants, mapping/document consistency, agent wiring and the MCP server |
 
-Every answer reports the **effective price increase** — the change in price-per-unit — because that's the number shrinkflation hides.
+**Limitations, stated plainly:**
+- **No quantitative eval of the agent.** The six query types were only spot-checked by hand. Answer quality and tool-call accuracy were never benchmarked.
+- **Demo-scale data.** Sizes, dates and sources follow public reports, but **prices are representative, not live quotes**. Points between documented events are interpolated. See [Data & methodology](#data--methodology).
+- **The original Elastic Cloud cluster has been shut down.** To run the agent, load the data into your own cluster with `make index`.
+- **The explorer's search** imitates Elasticsearch's `multi_match` with `fuzziness: AUTO`. It isn't Elasticsearch, so edge cases can rank differently.
 
 ## Architecture
 
-```
-USER ──► Gemini 2.0 Flash (Google ADK LlmAgent)
-              │  plans steps, selects tools
-              ▼
-      Elastic MCP Server (official, read-only)
-      ├─ search        product lookups (query DSL, fuzzy multi_match)
-      ├─ esql          price-per-unit analytics, aggregations, trends
-      ├─ list_indices  dynamic data discovery
-      ├─ get_mappings  schema-aware querying
-      └─ get_shards    data health checks
-              │
-              ▼
-      Elasticsearch (Elastic Cloud)
-      ├─ products              34 docs — current catalog
-      ├─ product_history       170 docs — size/price records 2019–2026
-      ├─ shrinkflation_alerts  29 docs — documented events with sources
-      └─ categories            7 docs — category-level stats
+```mermaid
+flowchart LR
+    U([Shopper]) -->|question| A["Google ADK LlmAgent<br/>Gemini Flash<br/>6 playbooks"]
+    A -->|MCP tool calls| M{{"Elastic MCP server<br/>search · esql · list_indices<br/>get_mappings · get_shards"}}
+    M --> ES[("Elasticsearch<br/>products · product_history<br/>shrinkflation_alerts · categories")]
+    P["data_pipeline.py<br/>curated seed table"] -->|JSON| ES
+    P -->|same JSON| X["Sleuth Explorer<br/>static site, GitHub Pages"]
+    A -->|sourced verdict| U
 ```
 
-- **Model:** `gemini-2.0-flash`
-- **Agent framework:** [Google Agent Development Kit (ADK)](https://google.github.io/adk-docs/) — `LlmAgent` with playbook-style instructions for six query types
-- **Elastic integration:** official `docker.elastic.co/mcp/elasticsearch` MCP server; all five read-only tools are used meaningfully (see `docs/architecture.md`)
-- **Deployment:** Cloud Run (FastAPI app via `google.adk.cli.fast_api.get_fast_api_app`, which also serves the ADK chat UI)
+- **Production topology (Cloud Run):** two services. One runs the official `docker.elastic.co/mcp/elasticsearch` image in HTTP mode. The other runs this repo's FastAPI app (`main.py`), which serves the ADK chat UI and API and reaches MCP via `ELASTIC_MCP_URL`.
+- **Local development:** with `ELASTIC_MCP_URL` unset, the agent spawns [`es_mcp_server.py`](agents/shrinkflation_sleuth/es_mcp_server.py) over stdio. It's a roughly 70-line Python MCP server exposing the same five tools, so no Docker is needed.
 
-## Quickstart (local)
+More detail in [docs/architecture.md](docs/architecture.md).
 
-Prereqs: Python 3.11+, Docker, an Elasticsearch cluster (Elastic Cloud free trial is fine), Google Cloud project with Vertex AI enabled (or an AI Studio API key).
+## Tech stack
+
+| Layer | Tools |
+|---|---|
+| Agent | Google ADK (`LlmAgent`), Gemini Flash (configurable via `GEMINI_MODEL`) |
+| Tools / integration | Model Context Protocol, Elastic MCP server, custom FastMCP server |
+| Data | Elasticsearch (query DSL + ES\|QL), Python data pipeline |
+| Serving | FastAPI / uvicorn, Docker, Cloud Run, Cloud Build |
+| Demo | Vanilla JS + inline SVG, no build step, GitHub Pages |
+| Quality | pytest, ruff, GitHub Actions |
+
+## Quickstart
+
+**Just the demo** (no accounts needed):
 
 ```bash
-git clone https://github.com/<you>/shrinkflation-sleuth && cd shrinkflation-sleuth
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-
-cp .env.example .env        # fill in ES_URL, ES_API_KEY, GCP settings
-
-# 1. Generate the dataset, create indices, load data
-python data/scripts/data_pipeline.py
-python data/scripts/create_indices.py
-python data/scripts/bulk_index.py
-
-# 2. Run the agent (spawns the Elastic MCP server via Docker in stdio mode)
-adk web agents/
-# open http://localhost:8000, select "shrinkflation_sleuth"
+git clone https://github.com/ShawnJoshua03/shrinkflation-sleuth && cd shrinkflation-sleuth
+make setup        # venv + dependencies
+make serve        # http://localhost:8080
 ```
 
-## Deploy to Cloud Run
-
-The agent container talks to the Elastic MCP server over HTTP, so deploy the MCP server as its own Cloud Run service first:
+**The full agent.** Prerequisites: Python 3.11+, an Elasticsearch cluster (an Elastic Cloud trial or a local Docker node), and Gemini access through Vertex AI or an AI Studio API key.
 
 ```bash
-# 1. Elastic MCP server (HTTP mode)
-gcloud run deploy elastic-mcp \
-  --image=docker.elastic.co/mcp/elasticsearch \
-  --args=http --port=8080 --region=us-central1 \
-  --set-env-vars=ES_URL=...,ES_API_KEY=...
-
-# 2. The agent itself
-gcloud builds submit --config cloudbuild.yaml
-# (cloudbuild.yaml expects es-url / es-api-key / elastic-mcp-url in Secret Manager)
+cp .env.example .env    # fill in ES_URL, ES_API_KEY and Gemini settings
+make index              # create the 4 indices and load the data
+make agent              # ADK chat UI at http://localhost:8000 → pick "shrinkflation_sleuth"
 ```
 
-Set `ELASTIC_MCP_URL` to the MCP service URL (e.g. `https://elastic-mcp-xxxx.run.app/mcp`). When `ELASTIC_MCP_URL` is unset, the agent falls back to spawning the MCP Docker image locally over stdio — convenient for development.
+Then ask: *"Has my Doritos bag gotten smaller?"*, *"Show me all shrinkflation from Procter & Gamble"*, *"Check these: Tide, Charmin, Folgers"*.
 
-## Repository layout
+**Development:** `make test`, `make lint`, `make format`, and `make data` regenerates the datasets deterministically. On Windows, run `make` from Git Bash, or run the commands in the [Makefile](Makefile) directly.
+
+**Deploying the agent to Cloud Run.** This needs a GCP billing account. Deploy the Elastic MCP server first, then the agent:
+
+```bash
+gcloud run deploy elastic-mcp --image=docker.elastic.co/mcp/elasticsearch \
+  --args=http --port=8080 --region=us-central1 --set-env-vars=ES_URL=...,ES_API_KEY=...
+gcloud builds submit --config cloudbuild.yaml   # expects es-url / es-api-key / elastic-mcp-url in Secret Manager
+```
+
+## Project structure
 
 ```
-agents/shrinkflation_sleuth/   ADK agent (root_agent + playbook instructions)
-main.py                        Cloud Run entrypoint (FastAPI + ADK web UI)
-data/scripts/                  data_pipeline.py · create_indices.py · bulk_index.py
-data/processed/                generated JSON for the four indices
-frontend/index.html            landing page
-docs/                          architecture notes, Devpost submission draft
-Dockerfile · cloudbuild.yaml   deployment
-LICENSE                        Apache 2.0
+agents/shrinkflation_sleuth/
+  agent.py            root_agent: Gemini + six playbooks + MCP toolset
+  es_mcp_server.py    local stdio MCP server (same 5 tools as the official image)
+main.py               FastAPI entrypoint for Cloud Run (serves the ADK UI + API)
+data/scripts/         data_pipeline.py · create_indices.py · bulk_index.py
+data/processed/       generated JSON for the 4 indices (also served to the demo)
+frontend/             landing page + Sleuth Explorer (index.html, explorer.js)
+tests/                pytest suite
+docs/                 architecture notes, original Devpost write-up, screenshots
+.github/workflows/    CI (lint + tests) and GitHub Pages deploy
+Dockerfile · cloudbuild.yaml · Makefile
 ```
+
+## What I learned / design decisions
+
+- **One agent with playbooks beat a pipeline of agents.** I first sketched a `SequentialAgent` (lookup → analyze → report). That forces every question through a product lookup, which is wrong for "which category is worst?" or "what data do you have?". A single `LlmAgent` with explicit multi-step playbooks has fewer moving parts and no agent-handoff failures, and the tool sequence is still visible in the trace.
+- **Agent quality is mostly instruction quality.** Real multi-step behaviour came from writing playbooks where each step's output is required by the next. For example, the `product_id` from `search` feeds both the ES|QL history query and the alert lookup. I also gave explicit error paths: zero hits, missing history, and an ES|QL syntax error that gets one retry with a simpler query.
+- **ES|QL suits agent analytics.** A single `STATS ... BY category` call replaces several aggregation round trips. That keeps the agent's plans short and its answers grounded in tool output ("never invent sizes, prices, or dates").
+- **Report the right metric.** Sticker price hides shrinkflation, and price-per-unit exposes it. Every answer leads with the *effective* price increase, which is always larger than the shrinkage percentage when the price holds steady.
+- **MCP made the data layer swappable.** The same agent talks to the official Elastic MCP image over HTTP in production and to a small Python MCP server over stdio locally. Only the connection parameters change.
+- **Make the demo honest, not impressive.** I couldn't host a public LLM endpoint for free without exposing a key. So the demo runs the same logic deterministically over the same data and says so, rather than faking a chat.
+- **Reproducibility bugs hide in plain sight.** The pipeline was documented as deterministic, but it derived UPCs from Python's per-process salted `hash()`. A test now regenerates the data and fails if the committed files have drifted.
 
 ## Data & methodology
 
-The demo dataset covers 34 products across 12 brands and 7 categories, curated from publicly documented shrinkflation reports (FullCarts.org, ShrinkWatch, ShrinkSpotter, Mouseprint.org, Capital One Shopping research, r/shrinkflation) plus BLS context on downsizing frequency. Records sourced only from community reports are marked `verified: false`. See `data/README.md` for details and caveats.
+The dataset is curated from publicly documented shrinkflation reports: FullCarts.org, ShrinkWatch / ShrinkSpotter, Mouseprint.org and Capital One Shopping research, with BLS downsizing data for context. Entries sourced only from r/shrinkflation are marked `verified: false`. Prices are representative retail prices around the time of each change, not a live feed. Full details and caveats are in [data/README.md](data/README.md).
+
+## Disclaimer
+
+For informational and educational purposes only. It is not financial or consumer-purchasing advice. Prices are illustrative. Product and brand names are trademarks of their respective owners and appear only to describe publicly reported package-size changes. This project is not affiliated with or endorsed by any brand, retailer, Google or Elastic.
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE).
+[Apache 2.0](LICENSE)
