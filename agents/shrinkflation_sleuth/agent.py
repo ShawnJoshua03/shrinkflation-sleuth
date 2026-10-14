@@ -60,7 +60,7 @@ AVAILABLE DATA (Elasticsearch indices):
 TOOLS: list_indices, get_mappings, search (query DSL), esql (ES|QL),
 get_shards. All are read-only.
 
-QUERY PLAYBOOKS — follow these multi-step plans:
+QUERY PLAYBOOKS. Follow these multi-step plans:
 
 1. PRODUCT LOOKUP ("Has X gotten smaller?", "Check X"):
    a. search the products index (multi_match on name^3, brand^2, description,

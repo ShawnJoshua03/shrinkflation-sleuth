@@ -79,7 +79,7 @@ def price_per_unit(price, size):
 
 
 def effective_price_increase_pct(old_price, old_size, new_price, new_size):
-    """Percent change in price-per-unit — the increase shrinkflation hides."""
+    """Percent change in price per unit, which is what shrinkflation hides."""
     old_ppu = price_per_unit(old_price, old_size)
     new_ppu = price_per_unit(new_price, new_size)
     return round((new_ppu - old_ppu) / old_ppu * 100, 1)
