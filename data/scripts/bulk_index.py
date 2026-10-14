@@ -1,11 +1,4 @@
-"""
-bulk_index.py — Load the processed JSON datasets into Elasticsearch.
-
-Run create_indices.py first. Env vars: ES_URL, ES_API_KEY.
-
-Usage:
-    python data/scripts/bulk_index.py
-"""
+"""Load data/processed/*.json into Elasticsearch. Run create_indices.py first."""
 
 import json
 import os
@@ -45,8 +38,6 @@ def main():
         print(f"{index}: indexed {ok} docs" + (f", {len(errors)} errors" if errors else ""))
 
     es.indices.refresh(index=",".join(DATASETS))
-
-    # Quick verification
     for index in DATASETS:
         count = es.count(index=index)["count"]
         print(f"verify {index}: {count} documents")

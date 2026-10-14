@@ -1,14 +1,4 @@
-"""
-create_indices.py — Create the four Shrinkflation Sleuth indices in
-Elasticsearch with explicit mappings.
-
-Env vars required (see .env.example):
-    ES_URL      e.g. https://my-deployment.es.us-central1.gcp.cloud.es.io
-    ES_API_KEY  Elasticsearch API key
-
-Usage:
-    python data/scripts/create_indices.py [--recreate]
-"""
+"""Create the four indices with explicit mappings. Pass --recreate to drop them first."""
 
 import os
 import sys
@@ -32,7 +22,6 @@ MAPPINGS = {
             "current_price": {"type": "float"},
             "price_per_unit": {"type": "float"},
             "description": {"type": "text"},
-            "image_url": {"type": "keyword"},
             "retailer": {"type": "keyword"},
             "last_updated": {"type": "date"},
             "shrinkflation_flag": {"type": "boolean"},
@@ -70,7 +59,6 @@ MAPPINGS = {
             "old_price": {"type": "float"},
             "new_price": {"type": "float"},
             "effective_price_increase_pct": {"type": "float"},
-            "date_detected": {"type": "date"},
             "date_changed": {"type": "date"},
             "source": {"type": "keyword"},
             "severity": {"type": "keyword"},
@@ -81,7 +69,6 @@ MAPPINGS = {
         "properties": {
             "category_id": {"type": "keyword"},
             "category_name": {"type": "text", "fields": {"keyword": {"type": "keyword"}}},
-            "parent_category": {"type": "keyword"},
             "avg_shrinkage_pct": {"type": "float"},
             "total_products": {"type": "integer"},
             "affected_products": {"type": "integer"},

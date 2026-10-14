@@ -12,8 +12,15 @@ def test_root_agent_is_configured():
     assert agent.root_agent.name == "shrinkflation_sleuth"
     assert agent.root_agent.model == agent.GEMINI_MODEL
     assert set(agent.ELASTIC_MCP_TOOLS) == {"list_indices", "get_mappings", "search", "esql", "get_shards"}
-    # Every playbook in the instruction is present.
-    for heading in ["PRODUCT LOOKUP", "BRAND INVESTIGATION", "CATEGORY ANALYSIS", "SHOPPING LIST AUDIT"]:
+    playbooks = [
+        "PRODUCT LOOKUP",
+        "BRAND INVESTIGATION",
+        "CATEGORY ANALYSIS",
+        "SHOPPING LIST AUDIT",
+        "TREND DASHBOARD",
+        "DATA DISCOVERY",
+    ]
+    for heading in playbooks:
         assert heading in agent.INSTRUCTION
 
 

@@ -1,16 +1,4 @@
-"""
-Shrinkflation Sleuth — root agent definition (Google ADK).
-
-A consumer-protection agent that detects and explains shrinkflation in
-grocery products by querying an Elasticsearch cluster through the official
-Elastic MCP server (read-only tools: list_indices, get_mappings, search,
-esql, get_shards).
-
-Run locally:
-    adk web agents/          # from repo root, then pick shrinkflation_sleuth
-Deploy:
-    see Dockerfile + main.py (FastAPI app for Cloud Run)
-"""
+"""Root agent: one Gemini LlmAgent with six playbooks and the Elastic MCP tools."""
 
 import os
 import sys
@@ -32,14 +20,7 @@ ELASTIC_MCP_TOOLS = ["list_indices", "get_mappings", "search", "esql", "get_shar
 
 
 def _elastic_mcp_toolset() -> McpToolset:
-    """Connect to the Elastic MCP server.
-
-    Two supported modes:
-    1. HTTP (recommended for Cloud Run): run the official Elastic MCP server
-       image as a separate service and set ELASTIC_MCP_URL.
-    2. stdio (local dev): spawn es_mcp_server.py, a small Python server that
-       exposes the same five tools. Requires ES_URL / ES_API_KEY.
-    """
+    """HTTP to the official Elastic MCP image if ELASTIC_MCP_URL is set, else spawn es_mcp_server.py."""
     mcp_url = os.environ.get("ELASTIC_MCP_URL")
     if mcp_url:
         return McpToolset(
@@ -65,8 +46,8 @@ def _elastic_mcp_toolset() -> McpToolset:
 
 INSTRUCTION = """
 You are Shrinkflation Sleuth, a consumer-protection agent that detects
-shrinkflation — companies reducing product sizes while keeping prices the
-same — using an Elasticsearch product database.
+shrinkflation (companies reducing product sizes while keeping prices the
+same) using an Elasticsearch product database.
 
 AVAILABLE DATA (Elasticsearch indices):
 - products: current catalog (product_id, name, brand, category, current_size,
@@ -118,7 +99,7 @@ QUERY PLAYBOOKS — follow these multi-step plans:
       | SORT shrinkage_pct DESC | LIMIT 10
    b. esql year-over-year:
       FROM shrinkflation_alerts | WHERE verified == true
-      | EVAL year = DATE_EXTRACT("year", date_detected)
+      | EVAL year = DATE_EXTRACT("year", date_changed)
       | STATS events = COUNT(*), avg_shrink = AVG(shrinkage_pct) BY year
       | SORT year ASC
    c. Return top events + trend summary.
@@ -140,7 +121,7 @@ RESPONSE FORMAT (every answer):
   category of the product just discussed).
 
 ERROR HANDLING:
-- search returns 0 hits → "I don't have data on <product> yet — try a related
+- search returns 0 hits → "I don't have data on <product> yet. Try a related
   brand or category, or ask what products I can check."
 - product found but no history rows → say so, and fall back to
   shrinkflation_alerts for a verified record.

@@ -11,7 +11,6 @@
     "current_price": 4.99,
     "price_per_unit": 0.5395,
     "description": "Doritos Nacho Cheese Tortilla Chips sold at Kroger. Category: Snacks / Chips.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -28,7 +27,6 @@
     "current_price": 5.99,
     "price_per_unit": 0.4792,
     "description": "Lay's Classic Potato Chips Party Size sold at Kroger. Category: Snacks / Chips.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -45,7 +43,6 @@
     "current_price": 4.99,
     "price_per_unit": 0.5395,
     "description": "Tostitos Scoops Tortilla Chips sold at Kroger. Category: Snacks / Chips.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -62,7 +59,6 @@
     "current_price": 4.49,
     "price_per_unit": 0.5613,
     "description": "Cheetos Crunchy Cheese Snacks sold at Walmart. Category: Snacks / Chips.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -79,7 +75,6 @@
     "current_price": 4.29,
     "price_per_unit": 0.4638,
     "description": "Fritos Original Corn Chips sold at Kroger. Category: Snacks / Chips.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -96,7 +91,6 @@
     "current_price": 4.19,
     "price_per_unit": 0.6207,
     "description": "Smartfood White Cheddar Popcorn sold at Kroger. Category: Snacks / Popcorn.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": false
@@ -113,7 +107,6 @@
     "current_price": 5.49,
     "price_per_unit": 0.3084,
     "description": "Ritz Original Crackers Family Size sold at Walmart. Category: Snacks / Crackers.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -130,7 +123,6 @@
     "current_price": 5.29,
     "price_per_unit": 0.3779,
     "description": "Wheat Thins Original Family Size sold at Target. Category: Snacks / Crackers.",
-    "image_url": "",
     "retailer": "Target",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -147,7 +139,6 @@
     "current_price": 3.99,
     "price_per_unit": 0.75,
     "description": "Cadbury Dairy Milk Sharing Bar sold at Kroger. Category: Candy / Chocolate.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -164,7 +155,6 @@
     "current_price": 7.49,
     "price_per_unit": 0.4432,
     "description": "Hershey's Kisses Family Bag sold at Walmart. Category: Candy / Chocolate.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -181,7 +171,6 @@
     "current_price": 5.49,
     "price_per_unit": 0.5463,
     "description": "M&M's Peanut Sharing Size sold at Kroger. Category: Candy / Chocolate.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -198,7 +187,6 @@
     "current_price": 1.99,
     "price_per_unit": 0.4975,
     "description": "Haribo Goldbears Gummi Candy sold at Walgreens. Category: Candy / Gummies.",
-    "image_url": "",
     "retailer": "Walgreens",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -215,7 +203,6 @@
     "current_price": 5.99,
     "price_per_unit": 0.3309,
     "description": "Cocoa Puffs Family Size Cereal sold at Kroger. Category: Cereal / Kids Cereal.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -232,7 +219,6 @@
     "current_price": 6.29,
     "price_per_unit": 0.3346,
     "description": "Cinnamon Toast Crunch Family Size sold at Target. Category: Cereal / Kids Cereal.",
-    "image_url": "",
     "retailer": "Target",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -249,7 +235,6 @@
     "current_price": 7.29,
     "price_per_unit": 0.3038,
     "description": "Kellogg's Frosted Flakes Giant Size sold at Walmart. Category: Cereal / Kids Cereal.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -266,7 +251,6 @@
     "current_price": 6.49,
     "price_per_unit": 0.1545,
     "description": "Quaker Old Fashioned Oats sold at Kroger. Category: Cereal / Oats.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": false
@@ -283,7 +267,6 @@
     "current_price": 3.49,
     "price_per_unit": 0.4363,
     "description": "Eggo Homestyle Waffles sold at Kroger. Category: Cereal / Frozen Breakfast.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -300,7 +283,6 @@
     "current_price": 13.99,
     "price_per_unit": 0.0573,
     "description": "Charmin Ultra Soft Mega Roll 12-pack (sheets/roll) sold at Kroger. Category: Household / Toilet Paper.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -317,7 +299,6 @@
     "current_price": 10.99,
     "price_per_unit": 0.1221,
     "description": "Bounty Select-A-Size Double Roll (sheets/roll) sold at Walmart. Category: Household / Paper Towels.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -334,7 +315,6 @@
     "current_price": 21.99,
     "price_per_unit": 0.2893,
     "description": "Tide PODS Original 3-in-1 sold at Target. Category: Household / Laundry.",
-    "image_url": "",
     "retailer": "Target",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -351,7 +331,6 @@
     "current_price": 1.79,
     "price_per_unit": 0.2754,
     "description": "Dawn Ultra Dishwashing Liquid sold at Kroger. Category: Household / Dish Soap.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -368,7 +347,6 @@
     "current_price": 11.99,
     "price_per_unit": 0.1642,
     "description": "Gain Liquid Laundry Detergent sold at Walmart. Category: Household / Laundry.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -385,7 +363,6 @@
     "current_price": 2.19,
     "price_per_unit": 0.0365,
     "description": "Kleenex Ultra Soft Facial Tissues (per box) sold at Kroger. Category: Household / Facial Tissue.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -402,7 +379,6 @@
     "current_price": 13.49,
     "price_per_unit": 0.1499,
     "description": "Hefty Strong Tall Kitchen Bags sold at Kroger. Category: Household / Trash Bags.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": false
@@ -419,7 +395,6 @@
     "current_price": 1.99,
     "price_per_unit": 0.0711,
     "description": "Gatorade Thirst Quencher Fruit Punch sold at Kroger. Category: Beverages / Sports Drinks.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -436,7 +411,6 @@
     "current_price": 4.39,
     "price_per_unit": 0.0844,
     "description": "Tropicana Pure Premium Orange Juice sold at Kroger. Category: Beverages / Juice.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -453,7 +427,6 @@
     "current_price": 12.99,
     "price_per_unit": 0.2986,
     "description": "Folgers Classic Roast Ground Coffee sold at Walmart. Category: Beverages / Coffee.",
-    "image_url": "",
     "retailer": "Walmart",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -470,7 +443,6 @@
     "current_price": 7.99,
     "price_per_unit": 0.0555,
     "description": "Coca-Cola Classic 12-pack Cans sold at Kroger. Category: Beverages / Soda.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": false
@@ -487,7 +459,6 @@
     "current_price": 4.49,
     "price_per_unit": 1.1816,
     "description": "Crest 3D White Toothpaste sold at Walgreens. Category: Personal Care / Oral Care.",
-    "image_url": "",
     "retailer": "Walgreens",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -504,7 +475,6 @@
     "current_price": 5.99,
     "price_per_unit": 0.576,
     "description": "Pantene Pro-V Daily Moisture Shampoo sold at Target. Category: Personal Care / Hair Care.",
-    "image_url": "",
     "retailer": "Target",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -521,7 +491,6 @@
     "current_price": 7.99,
     "price_per_unit": 0.3632,
     "description": "Dove Deep Moisture Body Wash sold at Kroger. Category: Personal Care / Body Wash.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -538,7 +507,6 @@
     "current_price": 6.49,
     "price_per_unit": 0.1352,
     "description": "Tillamook Old-Fashioned Vanilla Ice Cream sold at Kroger. Category: Frozen & Dairy / Ice Cream.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true
@@ -555,7 +523,6 @@
     "current_price": 5.49,
     "price_per_unit": 0.1144,
     "description": "Breyers Natural Vanilla sold at Kroger. Category: Frozen & Dairy / Ice Cream.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": false
@@ -572,7 +539,6 @@
     "current_price": 1.79,
     "price_per_unit": 0.3978,
     "description": "Chobani Flip Greek Yogurt sold at Kroger. Category: Frozen & Dairy / Yogurt.",
-    "image_url": "",
     "retailer": "Kroger",
     "last_updated": "2026-06-01",
     "shrinkflation_flag": true

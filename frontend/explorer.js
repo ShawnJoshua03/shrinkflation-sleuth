@@ -232,7 +232,7 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
     const verified = DB.shrinkflation_alerts.filter((a) => a.verified);
     const top = [...verified].sort((a, b) => b.shrinkage_pct - a.shrinkage_pct).slice(0, 10);
     const byYear = {};
-    for (const a of verified) (byYear[a.date_detected.slice(0, 4)] ||= []).push(a.shrinkage_pct);
+    for (const a of verified) (byYear[a.date_changed.slice(0, 4)] ||= []).push(a.shrinkage_pct);
     const years = Object.keys(byYear).sort();
     const maxN = Math.max(...years.map((y) => byYear[y].length));
     const bars = years.map((y) => `<div class="yr"><span class="col" style="--h:${(byYear[y].length / maxN) * 100}%"><em>${byYear[y].length}</em></span>
@@ -245,7 +245,7 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
       <div class="scroll"><table><thead><tr><th>#</th><th>Product</th><th>Brand</th><th>Shrink</th><th>Hidden increase</th><th>When</th></tr></thead><tbody>${rows}</tbody></table></div>
       ${agentBox(`
 esql  FROM shrinkflation_alerts | WHERE verified == true
-      | EVAL year = DATE_EXTRACT("year", date_detected)
+      | EVAL year = DATE_EXTRACT("year", date_changed)
       | STATS events = COUNT(*), avg_shrink = AVG(shrinkage_pct) BY year | SORT year ASC`)}`;
   }
 

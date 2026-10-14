@@ -1,20 +1,7 @@
-"""
-data_pipeline.py — Transform curated shrinkflation events into the four
-Elasticsearch index datasets (products, product_history, shrinkflation_alerts,
-categories).
+"""Build the four index datasets in data/processed/ from the SEED table.
 
-The seed events below are a demo dataset curated from widely documented
-shrinkflation reports (FullCarts.org, ShrinkWatch, Capital One Shopping
-research, Mouseprint.org, r/shrinkflation). Sizes/prices are representative
-of reported changes; see data/README.md for methodology and caveats.
-
-Usage:
-    python data/scripts/data_pipeline.py
-Outputs:
-    data/processed/products.json
-    data/processed/product_history.json
-    data/processed/shrinkflation_alerts.json
-    data/processed/categories.json
+Sizes and dates follow public shrinkflation reports. Prices are representative,
+not quotes. See data/README.md.
 """
 
 import hashlib
@@ -24,12 +11,9 @@ from collections import defaultdict
 
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "processed")
 
-# ---------------------------------------------------------------------------
-# Seed data: (product_id, name, brand, category, subcategory, unit,
-#             old_size, new_size, old_price, new_price,
-#             date_changed, source, retailer)
-# A new_size equal to old_size means no shrinkflation (control products).
-# ---------------------------------------------------------------------------
+# (product_id, name, brand, category, subcategory, unit,
+#  old_size, new_size, old_price, new_price, date_changed, source, retailer)
+# Rows where new_size == old_size are control products that never shrank.
 # fmt: off
 SEED = [
     # --- Snacks (Frito-Lay / PepsiCo) ---
@@ -129,10 +113,10 @@ def year_after(date_str, years=1):
     return f"{int(y) + years}-{rest}"
 
 
-def build_datasets(seed=SEED):
+def build_datasets():
     """Return {filename: records} for the four index datasets."""
     products, history, alerts = [], [], []
-    cat_stats = defaultdict(lambda: {"total": 0, "affected": 0, "shrink": []})
+    category_stats = defaultdict(lambda: {"total": 0, "affected": 0, "shrink": []})
 
     for (
         pid,
@@ -148,7 +132,7 @@ def build_datasets(seed=SEED):
         date_changed,
         source,
         retailer,
-    ) in seed:
+    ) in SEED:
         shrunk = new_size < old_size
         shrink_pct = shrinkage_pct(old_size, new_size)
         new_ppu = price_per_unit(new_price, new_size)
@@ -167,15 +151,15 @@ def build_datasets(seed=SEED):
                 "current_price": new_price,
                 "price_per_unit": new_ppu,
                 "description": f"{name} sold at {retailer}. Category: {cat} / {subcat}.",
-                "image_url": "",
                 "retailer": retailer,
                 "last_updated": "2026-06-01",
                 "shrinkflation_flag": shrunk,
             }
         )
 
-        # History: 2 records at old size, change, 2 records at new size
-        recs = [
+        # Only the change itself is documented. The points around it are
+        # interpolated, with a little price drift so the series isn't flat.
+        history_points = [
             (year_before(date_changed, 2), old_size, round(old_price * 0.96, 2)),
             (year_before(date_changed, 1), old_size, old_price),
             (date_changed, new_size, new_price),
@@ -183,7 +167,7 @@ def build_datasets(seed=SEED):
             ("2026-05-15", new_size, round(new_price * 1.04, 2)),
         ]
         prev_size, prev_price = None, None
-        for i, (d, size, price) in enumerate(recs):
+        for i, (record_date, size, price) in enumerate(history_points):
             size_chg = round((size - prev_size) / prev_size * 100, 1) if prev_size else 0.0
             price_chg = round((price - prev_price) / prev_price * 100, 1) if prev_price else 0.0
             history.append(
@@ -197,8 +181,8 @@ def build_datasets(seed=SEED):
                     "size_unit": unit,
                     "price": price,
                     "price_per_unit": price_per_unit(price, size),
-                    "record_date": d,
-                    "source": source if d == date_changed else "retail price capture",
+                    "record_date": record_date,
+                    "source": source if record_date == date_changed else "retail price capture",
                     "retailer": retailer,
                     "size_change_pct": size_chg,
                     "price_change_pct": price_chg,
@@ -221,7 +205,6 @@ def build_datasets(seed=SEED):
                     "old_price": old_price,
                     "new_price": new_price,
                     "effective_price_increase_pct": eff_increase,
-                    "date_detected": date_changed,
                     "date_changed": date_changed,
                     "source": source,
                     "severity": severity(shrink_pct),
@@ -229,23 +212,23 @@ def build_datasets(seed=SEED):
                 }
             )
 
-        cat_stats[cat]["total"] += 1
+        category_stats[cat]["total"] += 1
         if shrunk:
-            cat_stats[cat]["affected"] += 1
-            cat_stats[cat]["shrink"].append(shrink_pct)
+            category_stats[cat]["affected"] += 1
+            category_stats[cat]["shrink"].append(shrink_pct)
 
     categories = []
-    for i, (cat, s) in enumerate(sorted(cat_stats.items()), 1):
-        avg = round(sum(s["shrink"]) / len(s["shrink"]), 1) if s["shrink"] else 0.0
+    for i, (cat, stats) in enumerate(sorted(category_stats.items()), 1):
+        shrinks = stats["shrink"]
+        avg = round(sum(shrinks) / len(shrinks), 1) if shrinks else 0.0
         categories.append(
             {
                 "category_id": f"cat-{i:03d}",
                 "category_name": cat,
-                "parent_category": "Grocery",
                 "avg_shrinkage_pct": avg,
-                "total_products": s["total"],
-                "affected_products": s["affected"],
-                "shrinkflation_rate": round(s["affected"] / s["total"], 2),
+                "total_products": stats["total"],
+                "affected_products": stats["affected"],
+                "shrinkflation_rate": round(stats["affected"] / stats["total"], 2),
             }
         )
 
@@ -261,10 +244,10 @@ def serialize(records):
     return json.dumps(records, indent=2) + "\n"
 
 
-def main(out_dir=OUT_DIR):
-    os.makedirs(out_dir, exist_ok=True)
+def main():
+    os.makedirs(OUT_DIR, exist_ok=True)
     for fname, records in build_datasets().items():
-        with open(os.path.join(out_dir, fname), "w", encoding="utf-8", newline="\n") as f:
+        with open(os.path.join(OUT_DIR, fname), "w", encoding="utf-8", newline="\n") as f:
             f.write(serialize(records))
         print(f"wrote {fname}: {len(records)} records")
 

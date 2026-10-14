@@ -1,12 +1,7 @@
-"""
-es_mcp_server.py — Stdio MCP server wrapping the Elasticsearch Python client.
+"""Local stand-in for the docker.elastic.co/mcp/elasticsearch image.
 
-Implements the same 5 read-only tools as docker.elastic.co/mcp/elasticsearch:
-  list_indices, get_mappings, search, esql, get_shards
-
-agent.py spawns this over stdio for local development when ELASTIC_MCP_URL
-is not set, so the agent runs without Docker. Reads ES_URL and ES_API_KEY
-from the environment (loaded via python-dotenv).
+Exposes the same five read-only tools over stdio. agent.py spawns it when
+ELASTIC_MCP_URL is unset, so local development doesn't need Docker.
 """
 
 import json
