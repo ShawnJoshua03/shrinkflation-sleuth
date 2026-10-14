@@ -20,4 +20,8 @@ select = ["E", "F", "W", "I", "B", "UP"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
-filterwarnings = ["ignore::UserWarning", "ignore::DeprecationWarning:google.*"]
+# Both come from inside google-adk, not this code.
+filterwarnings = [
+    'ignore:\[EXPERIMENTAL\]:UserWarning',
+    "ignore:BaseAgentConfig is deprecated:DeprecationWarning",
+]
