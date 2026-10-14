@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shrinkflation Sleuth — Know what you're really paying for</title>
+<title>Shrinkflation Sleuth</title>
 <meta name="description" content="An AI agent (Gemini + Google ADK + Elasticsearch) that detects grocery shrinkflation and computes the hidden price-per-unit increase. Try the interactive explorer.">
 <meta property="og:title" content="Shrinkflation Sleuth">
-<meta property="og:description" content="Same price. Smaller bag. See the hidden price-per-unit increase on 34 documented grocery products.">
+<meta property="og:description" content="The hidden price-per-unit increase on 34 grocery products, 29 of which shrank.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#F7F6F1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -189,7 +189,7 @@
 
 <header>
   <div class="wrap">
-    <div class="logo">SHRINKFLATION<span>_</span>SLEUTH 🔍</div>
+    <div class="logo">SHRINKFLATION<span>_</span>SLEUTH</div>
     <nav>
       <a href="#how" class="hide-sm">How it works</a>
       <a href="#explorer">Try it</a>
@@ -201,10 +201,10 @@
 <main>
   <div class="wrap hero">
     <div>
-      <h1>Same price.<br>Smaller bag.<br><em>Now you'll know.</em></h1>
-      <p class="lede">Shrinkflation Sleuth is an AI agent that searches a product
-        database of documented size changes, computes the price-per-ounce you're
-        actually paying, and gives you a verdict — with sources.</p>
+      <h1>Same price,<br><em>smaller bag.</em></h1>
+      <p class="lede">Shrinkflation Sleuth is a Gemini agent that looks up a
+        product's documented size changes and works out how much more you now pay
+        per ounce. Each size cut links to the report it came from.</p>
       <div class="cta-row">
         <a class="btn primary" href="#explorer">Try the explorer</a>
         <a class="btn" href="https://github.com/ShawnJoshua03/shrinkflation-sleuth" rel="noopener">View on GitHub</a>
@@ -225,7 +225,7 @@
 
   <section>
     <div class="wrap">
-      <div class="kicker">Why it matters</div>
+      <div class="kicker">The numbers</div>
       <div class="stats">
         <div class="stat"><b>~33%</b><span>of grocery items affected by shrinkflation (Capital One Shopping research, 2025)</span></div>
         <div class="stat"><b>+12.2%</b><span>average hidden price-per-unit increase across the 29 documented size cuts in this dataset</span></div>
@@ -291,15 +291,15 @@
   <section id="ask">
     <div class="wrap">
       <div class="kicker">What to ask</div>
-      <h3>Six investigations, one agent</h3>
+      <h3>Questions the full agent handles</h3>
       <p style="max-width:60ch;color:var(--dim)">With the full agent you ask in plain English and Gemini picks the playbook.</p>
       <div class="queries">
-        <div class="q"><div class="ask">Has my Doritos bag gotten smaller?</div><p>Product lookup — size history, price-per-unit trend, verdict.</p></div>
-        <div class="q"><div class="ask">Show me all shrinkflation from Frito-Lay</div><p>Brand investigation — ranked scorecard via ES|QL aggregation.</p></div>
-        <div class="q"><div class="ask">Which category has the worst shrinkflation?</div><p>Category analysis — averages, worst offenders, examples.</p></div>
-        <div class="q"><div class="ask">Check these: Doritos, Charmin, Tide, Oreos</div><p>Shopping list audit — report card with total hidden cost.</p></div>
-        <div class="q"><div class="ask">What are the worst trends this year?</div><p>Trend dashboard — top events and year-over-year shifts.</p></div>
-        <div class="q"><div class="ask">What data do you have?</div><p>Data discovery — the agent inspects its own indices live.</p></div>
+        <div class="q"><div class="ask">Has my Doritos bag gotten smaller?</div><p>Product lookup: size history, price-per-unit trend, verdict.</p></div>
+        <div class="q"><div class="ask">Show me all shrinkflation from Frito-Lay</div><p>Brand investigation: products ranked by shrinkage, via an ES|QL aggregation.</p></div>
+        <div class="q"><div class="ask">Which category has the worst shrinkflation?</div><p>Category analysis: average shrinkage per category and the worst three products.</p></div>
+        <div class="q"><div class="ask">Check these: Doritos, Charmin, Tide, Oreos</div><p>Shopping list audit: each item checked, plus the total hidden cost.</p></div>
+        <div class="q"><div class="ask">What are the worst trends this year?</div><p>Trend dashboard: the ten biggest cuts and a count per year.</p></div>
+        <div class="q"><div class="ask">What data do you have?</div><p>Data discovery: lists the indices and reads their mappings.</p></div>
       </div>
     </div>
   </section>
@@ -307,11 +307,11 @@
   <section id="how">
     <div class="wrap">
       <div class="kicker">How it works</div>
-      <h3>Gemini plans. Elasticsearch answers.</h3>
+      <h3>One Gemini agent, five read-only MCP tools</h3>
       <p style="max-width:60ch;color:var(--dim)">Built with Gemini Flash on Google ADK,
-        connected to Elasticsearch through the official Elastic MCP server. Every answer
-        is a multi-step mission: discover the data, search the catalog, run ES|QL
-        analytics, cross-check verified alerts, then report.</p>
+        connected to Elasticsearch through the official Elastic MCP server. A product
+        question takes three tool calls: search for the product, pull its history
+        with ES|QL, then look up the documented size change.</p>
       <div class="flow">USER ──► GEMINI FLASH (ADK agent)
               │ plans steps, picks tools
               ▼
@@ -320,7 +320,7 @@
       ├─ esql            price-per-unit analytics
       ├─ list_indices    discover data
       ├─ get_mappings    understand schema
-      └─ get_shards      verify data health
+      └─ get_shards      shard status
               │
               ▼
       ELASTICSEARCH  (products · product_history · shrinkflation_alerts · categories)</div>

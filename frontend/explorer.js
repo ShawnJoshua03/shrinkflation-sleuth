@@ -1,6 +1,6 @@
-// Sleuth Explorer: runs the agent's query playbooks in the browser over the
-// same JSON documents that are indexed into Elasticsearch. Deterministic — no
-// LLM involved — so each panel also shows the tool call the agent would make.
+// Runs the agent's playbooks in the browser over the same JSON that gets
+// indexed into Elasticsearch. There's no LLM here, so each panel shows the
+// tool calls the real agent makes for that question.
 (() => {
   "use strict";
 
@@ -11,10 +11,10 @@
   );
   const SEV = { low: "🟢 low", medium: "🟡 medium", high: "🔴 high" };
   const TIPS = {
-    high: "Compare the shelf tag's unit price (per oz / per count), not the sticker price — and check the store brand, which often kept the old size.",
+    high: "Compare the shelf tag's unit price (per oz / per count), not the sticker price. Also check the store brand, which often kept the old size.",
     medium: "Buy by unit price. Larger packs and store brands frequently beat the shrunk name-brand pack.",
     low: "Small cut, but it compounds: check the unit price on the shelf tag before restocking.",
-    none: "No size cut on record. Keep an eye on the unit price — shrinkflation usually lands without notice.",
+    none: "No size cut on record. Keep an eye on the unit price, since size cuts are rarely announced.",
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -22,7 +22,7 @@
     String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const money = (n) => `$${n.toFixed(2)}`;
   const ppu = (n, unit) => `$${n.toFixed(3)}/${unit}`;
-  const pct = (n, signed = true) => `${signed && n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+  const pct = (n) => `${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
   const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   const verifiedBadge = (a) =>
     a.verified ? `<span class="badge ok">✅ Verified · ${esc(a.source)}</span>`
@@ -30,7 +30,7 @@
 
   let DB = null;
 
-  // ---- search: a small take on multi_match(name^3, brand^2, description, fuzziness AUTO)
+  // Approximates multi_match(name^3, brand^2, description, fuzziness AUTO).
   const norm = (s) => s.toLowerCase().replace(/['’&]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
   const words = (s) => norm(s).split(" ").filter(Boolean);
 
@@ -75,7 +75,7 @@
   const agentBox = (code) =>
     `<details class="agent"><summary>What the agent runs for this</summary><pre>${esc(code.trim())}</pre></details>`;
 
-  // ---- chart: price-per-unit over time as an inline SVG step line
+  // Price per unit over time, as an SVG step line.
   function ppuChart(hist, alert) {
     const W = 640, H = 210, L = 92, R = 16, T = 18, B = 30;
     const t = (d) => new Date(d).getTime();
@@ -105,15 +105,15 @@
       <path d="${d}" class="line"/>${dots}${xl}${cutLabel}</svg>`;
   }
 
-  // ---- playbook 1: product lookup
+  // Playbook 1: product lookup
   function renderProduct(p, others = []) {
     const hist = historyOf(p.product_id);
     const a = alertOf(p.product_id);
     const unit = p.current_size_unit;
-    let body;
+    let findings;
     if (a) {
       const oldPpu = a.old_price / a.old_size, newPpu = a.new_price / a.new_size;
-      body = `
+      findings = `
         <div class="verdict bad">SHRINKFLATION · ${SEV[a.severity]}</div>
         <dl class="facts">
           <dt>📦 Size change</dt><dd><s>${a.old_size} ${esc(unit)}</s> → <b>${a.new_size} ${esc(unit)}</b> (−${a.shrinkage_pct.toFixed(1)}%) on ${esc(a.date_changed)}</dd>
@@ -125,23 +125,23 @@
     } else {
       const first = hist[0], last = hist[hist.length - 1];
       const drift = ((last.price_per_unit - first.price_per_unit) / first.price_per_unit) * 100;
-      body = `
+      findings = `
         <div class="verdict good">NO SIZE CHANGE ON RECORD</div>
         <dl class="facts">
           <dt>📦 Size</dt><dd>${p.current_size} ${esc(unit)} since ${esc(first.record_date)}</dd>
-          <dt>💰 Price-per-unit drift</dt><dd>${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)}) — ordinary price change, not shrinkflation</dd>
+          <dt>💰 Price-per-unit drift</dt><dd>${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)}), an ordinary price change with no size cut</dd>
         </dl>
         <p class="tip">💡 ${TIPS.none}</p>`;
     }
-    const more = others.length
+    const alsoMatched = others.length
       ? `<p class="also">Also matched: ${others.map((o) => `<button class="link" data-pid="${esc(o.product_id)}">${esc(o.name)}</button>`).join(" · ")}</p>` : "";
     return `
       <article class="report">
         <header><h4>${esc(p.name)}</h4><span class="meta">${esc(p.brand)} · ${esc(p.category)} · ${esc(p.retailer)}</span></header>
-        ${body}
+        ${findings}
         ${ppuChart(hist, a)}
         <p class="next">Next check → <button class="link" data-brand="${esc(p.brand)}">all ${esc(p.brand)} products</button></p>
-        ${more}
+        ${alsoMatched}
       </article>
       ${agentBox(`
 search  products  {"multi_match": {"query": "…", "fields": ["name^3","brand^2","description"], "fuzziness": "AUTO"}}
@@ -151,14 +151,13 @@ search  shrinkflation_alerts  {"term": {"product_id": "${p.product_id}"}}`)}`;
   }
 
   function lookup(query) {
-    const out = $("#out-lookup");
     const hits = search(query);
-    out.innerHTML = hits.length
+    $("#out-lookup").innerHTML = hits.length
       ? renderProduct(hits[0], hits.slice(1))
-      : `<p class="empty">I don't have data on “${esc(query)}” yet — try a related brand or category, or pick one of the examples.</p>`;
+      : `<p class="empty">I don't have data on “${esc(query)}” yet. Try a related brand or category, or pick one of the examples.</p>`;
   }
 
-  // ---- playbook 2: brand investigation
+  // Playbook 2: brand investigation
   function renderBrand(brand) {
     const prods = DB.products.filter((p) => p.brand === brand);
     const alerts = DB.shrinkflation_alerts.filter((a) => a.brand === brand)
@@ -180,20 +179,20 @@ esql  FROM shrinkflation_alerts | WHERE brand == "${brand}"
               avg_increase = AVG(effective_price_increase_pct) BY brand`)}`;
   }
 
-  // ---- playbook 3: category analysis (verified events only)
+  // Playbook 3: category analysis, verified events only
   function renderCategories(selected) {
     const verified = DB.shrinkflation_alerts.filter((a) => a.verified);
     const groups = {};
     for (const a of verified) (groups[a.category] ||= []).push(a);
     const ranking = Object.entries(groups)
-      .map(([cat, as]) => ({ cat, as, avg: avg(as.map((a) => a.shrinkage_pct)), worst: Math.max(...as.map((a) => a.shrinkage_pct)) }))
+      .map(([cat, alerts]) => ({ cat, alerts, avg: avg(alerts.map((a) => a.shrinkage_pct)), worst: Math.max(...alerts.map((a) => a.shrinkage_pct)) }))
       .sort((a, b) => b.avg - a.avg);
     const pick = ranking.find((r) => r.cat === selected) || ranking[0];
     const maxAvg = ranking[0].avg;
     const rows = ranking.map((r) => `<tr class="${r === pick ? "sel" : ""}"><td><button class="link" data-cat="${esc(r.cat)}">${esc(r.cat)}</button></td>
-      <td><span class="bar" style="--w:${(r.avg / maxAvg) * 100}%"></span> −${r.avg.toFixed(1)}%</td><td class="num">${r.as.length}</td><td class="num">−${r.worst.toFixed(1)}%</td></tr>`).join("");
-    const top = [...pick.as].sort((a, b) => b.shrinkage_pct - a.shrinkage_pct).slice(0, 3)
-      .map((a) => `<li><b>${esc(a.product_name)}</b> — ${a.old_size} → ${a.new_size} ${esc(a.size_unit)} (−${a.shrinkage_pct.toFixed(1)}%, ${pct(a.effective_price_increase_pct)} per unit)</li>`).join("");
+      <td><span class="bar" style="--w:${(r.avg / maxAvg) * 100}%"></span> −${r.avg.toFixed(1)}%</td><td class="num">${r.alerts.length}</td><td class="num">−${r.worst.toFixed(1)}%</td></tr>`).join("");
+    const top = [...pick.alerts].sort((a, b) => b.shrinkage_pct - a.shrinkage_pct).slice(0, 3)
+      .map((a) => `<li><b>${esc(a.product_name)}</b>: ${a.old_size} → ${a.new_size} ${esc(a.size_unit)} (−${a.shrinkage_pct.toFixed(1)}%, ${pct(a.effective_price_increase_pct)} per unit)</li>`).join("");
     $("#out-category").innerHTML = `
       <div class="scroll"><table><thead><tr><th>Category</th><th>Avg shrinkage</th><th>Events</th><th>Worst</th></tr></thead><tbody>${rows}</tbody></table></div>
       <h5>Worst offenders · ${esc(pick.cat)}</h5><ol class="offenders">${top}</ol>
@@ -204,7 +203,7 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
       | SORT avg_shrinkage DESC`)}`;
   }
 
-  // ---- playbook 4: shopping list audit
+  // Playbook 4: shopping list audit
   function renderList(text) {
     const items = text.split(/[,\n]/).map((s) => s.trim()).filter(Boolean).slice(0, 20);
     let total = 0, shrunk = 0;
@@ -227,7 +226,7 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
       ${agentBox("for each item: playbook 1 (search → esql history → search alerts), then sum the hidden cost")}`;
   }
 
-  // ---- playbook 5: trends
+  // Playbook 5: trend dashboard
   function renderTrends() {
     const verified = DB.shrinkflation_alerts.filter((a) => a.verified);
     const top = [...verified].sort((a, b) => b.shrinkage_pct - a.shrinkage_pct).slice(0, 10);
@@ -249,7 +248,6 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
       | STATS events = COUNT(*), avg_shrink = AVG(shrinkage_pct) BY year | SORT year ASC`)}`;
   }
 
-  // ---- wiring
   function showTab(name) {
     document.querySelectorAll("[role=tab]").forEach((t) => t.setAttribute("aria-selected", t.dataset.tab === name));
     document.querySelectorAll("[role=tabpanel]").forEach((p) => (p.hidden = p.id !== `panel-${name}`));
