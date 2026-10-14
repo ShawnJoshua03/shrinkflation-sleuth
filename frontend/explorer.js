@@ -9,7 +9,7 @@
     ("has have my the a an of is did does gotten get got smaller shrunk shrink bag box pack " +
       "check these show me all from what are which worst this year with it any how much").split(" "),
   );
-  const SEV = { low: "🟢 low", medium: "🟡 medium", high: "🔴 high" };
+  const sev = (level) => `<span class="sev-${level}">${level}</span>`;
   const TIPS = {
     high: "Compare the shelf tag's unit price (per oz / per count), not the sticker price. Also check the store brand, which often kept the old size.",
     medium: "Buy by unit price. Larger packs and store brands frequently beat the shrunk name-brand pack.",
@@ -25,7 +25,7 @@
   const pct = (n) => `${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
   const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   const verifiedBadge = (a) =>
-    a.verified ? `<span class="badge ok">✅ Verified · ${esc(a.source)}</span>`
+    a.verified ? `<span class="badge ok">Verified · ${esc(a.source)}</span>`
                : `<span class="badge warn">Unverified · ${esc(a.source)}</span>`;
 
   let DB = null;
@@ -114,24 +114,24 @@
     if (a) {
       const oldPpu = a.old_price / a.old_size, newPpu = a.new_price / a.new_size;
       findings = `
-        <div class="verdict bad">SHRINKFLATION · ${SEV[a.severity]}</div>
+        <div class="verdict bad">SHRINKFLATION · ${a.severity.toUpperCase()}</div>
         <dl class="facts">
-          <dt>📦 Size change</dt><dd><s>${a.old_size} ${esc(unit)}</s> → <b>${a.new_size} ${esc(unit)}</b> (−${a.shrinkage_pct.toFixed(1)}%) on ${esc(a.date_changed)}</dd>
-          <dt>💰 Price impact</dt><dd>${money(a.old_price)} → ${money(a.new_price)} sticker · ${ppu(oldPpu, unit)} → ${ppu(newPpu, unit)}</dd>
+          <dt>Size change</dt><dd><s>${a.old_size} ${esc(unit)}</s> → <b>${a.new_size} ${esc(unit)}</b> (−${a.shrinkage_pct.toFixed(1)}%) on ${esc(a.date_changed)}</dd>
+          <dt>Price impact</dt><dd>${money(a.old_price)} → ${money(a.new_price)} sticker · ${ppu(oldPpu, unit)} → ${ppu(newPpu, unit)}</dd>
           <dt>Effective price increase</dt><dd class="big">${pct(a.effective_price_increase_pct)}</dd>
           <dt>Evidence</dt><dd>${verifiedBadge(a)}</dd>
         </dl>
-        <p class="tip">💡 ${TIPS[a.severity]}</p>`;
+        <p class="tip">${TIPS[a.severity]}</p>`;
     } else {
       const first = hist[0], last = hist[hist.length - 1];
       const drift = ((last.price_per_unit - first.price_per_unit) / first.price_per_unit) * 100;
       findings = `
         <div class="verdict good">NO SIZE CHANGE ON RECORD</div>
         <dl class="facts">
-          <dt>📦 Size</dt><dd>${p.current_size} ${esc(unit)} since ${esc(first.record_date)}</dd>
-          <dt>💰 Price-per-unit drift</dt><dd>${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)}), an ordinary price change with no size cut</dd>
+          <dt>Size</dt><dd>${p.current_size} ${esc(unit)} since ${esc(first.record_date)}</dd>
+          <dt>Price-per-unit drift</dt><dd>${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)}), an ordinary price change with no size cut</dd>
         </dl>
-        <p class="tip">💡 ${TIPS.none}</p>`;
+        <p class="tip">${TIPS.none}</p>`;
     }
     const alsoMatched = others.length
       ? `<p class="also">Also matched: ${others.map((o) => `<button class="link" data-pid="${esc(o.product_id)}">${esc(o.name)}</button>`).join(" · ")}</p>` : "";
@@ -163,7 +163,7 @@ search  shrinkflation_alerts  {"term": {"product_id": "${p.product_id}"}}`)}`;
     const alerts = DB.shrinkflation_alerts.filter((a) => a.brand === brand)
       .sort((a, b) => b.shrinkage_pct - a.shrinkage_pct);
     const rows = alerts.map((a) => `<tr><td>${esc(a.product_name)}</td><td>${a.old_size} → ${a.new_size} ${esc(a.size_unit)}</td>
-      <td class="num">−${a.shrinkage_pct.toFixed(1)}%</td><td class="num">${pct(a.effective_price_increase_pct)}</td><td>${SEV[a.severity]}</td><td>${verifiedBadge(a)}</td></tr>`).join("");
+      <td class="num">−${a.shrinkage_pct.toFixed(1)}%</td><td class="num">${pct(a.effective_price_increase_pct)}</td><td>${sev(a.severity)}</td><td>${verifiedBadge(a)}</td></tr>`).join("");
     $("#out-brand").innerHTML = `
       <div class="kpis">
         <div><b>${prods.length}</b><span>products tracked</span></div>
@@ -211,12 +211,12 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
       const p = search(item, 1)[0];
       if (!p) return `<tr><td>${esc(item)}</td><td colspan="4" class="dim">no data yet</td></tr>`;
       const a = alertOf(p.product_id);
-      if (!a) return `<tr><td>${esc(item)}</td><td>${esc(p.name)}</td><td>🟢 no change</td><td class="num">—</td><td class="num">$0.00</td></tr>`;
+      if (!a) return `<tr><td>${esc(item)}</td><td>${esc(p.name)}</td><td>no change</td><td class="num">—</td><td class="num">$0.00</td></tr>`;
       // Extra paid per purchase today vs. buying the same amount at the pre-shrink unit price.
       const extra = a.new_price - (a.old_price / a.old_size) * a.new_size;
       total += extra;
       shrunk++;
-      return `<tr><td>${esc(item)}</td><td>${esc(p.name)}</td><td>${SEV[a.severity]} −${a.shrinkage_pct.toFixed(1)}%</td>
+      return `<tr><td>${esc(item)}</td><td>${esc(p.name)}</td><td>−${a.shrinkage_pct.toFixed(1)}% · ${sev(a.severity)}</td>
         <td class="num">${pct(a.effective_price_increase_pct)}</td><td class="num">${money(extra)}</td></tr>`;
     }).join("");
     $("#out-list").innerHTML = `

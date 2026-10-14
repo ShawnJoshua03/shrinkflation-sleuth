@@ -28,4 +28,4 @@ The prompt names the four indices and their main fields, so the agent doesn't di
 1. `search` products: `multi_match` on `name^3, brand^2, description`, `fuzziness: AUTO`. This gives the `product_id`.
 2. `esql`: `FROM product_history | WHERE product_id == "<id>" | EVAL ppu = price / size | SORT record_date ASC`
 3. `search` shrinkflation_alerts by `product_id` for the documented change and its source.
-4. Gemini writes the answer: size change, effective price increase, severity (🟢🟡🔴), a tip, and one suggested next check.
+4. Gemini writes the answer: size change, effective price increase, severity (low, medium or high), a tip, and one suggested next check.

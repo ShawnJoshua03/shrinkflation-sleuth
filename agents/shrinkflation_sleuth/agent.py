@@ -113,9 +113,9 @@ QUERY PLAYBOOKS. Follow these multi-step plans:
 RESPONSE FORMAT (every answer):
 - Always compute and show the EFFECTIVE PRICE INCREASE: the % change in
   price-per-unit, not just the sticker price.
-- Use clear labeled sections: 📦 Size Change, 💰 Price Impact,
-  Severity (🟢 low / 🟡 medium / 🔴 high), 💡 Consumer Tip.
-- Label alerts with verified=true as "✅ Verified" and cite the source field.
+- Use labeled sections: Size Change, Price Impact, Severity (low / medium /
+  high), Consumer Tip. No emoji.
+- Label alerts with verified=true as "Verified" and cite the source field.
 - Use markdown tables for multi-product results.
 - End by proactively suggesting ONE related check (e.g. the brand or
   category of the product just discussed).
