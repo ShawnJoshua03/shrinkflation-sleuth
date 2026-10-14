@@ -1,37 +1,31 @@
 # Architecture
 
+The README covers the overall shape and the deployment topology. This page has the details.
+
 ## Components
 
 | Layer | Choice | Why |
 |---|---|---|
-| Reasoning | Gemini Flash (`GEMINI_MODEL`, default `gemini-2.5-flash`; `gemini-2.0-flash` at the hackathon) | Hackathon requirement; fast multi-step tool use |
-| Agent framework | Google ADK `LlmAgent` | Code-first control, runnable locally (`adk web`) and deployable to Cloud Run via `get_fast_api_app` |
-| Data layer | Elasticsearch (Elastic Cloud) | Full-text product search + ES\|QL analytics in one engine |
-| Integration | Official Elastic MCP server (Cloud Run) / `es_mcp_server.py` (local) | The same five read-only tools exposed over MCP: HTTP on Cloud Run, stdio locally |
+| Model | Gemini Flash (`GEMINI_MODEL`, default `gemini-2.5-flash`; `gemini-2.0-flash` at the hackathon, since retired) | Required by the hackathon |
+| Agent framework | Google ADK `LlmAgent` | Runs locally with `adk web` and deploys to Cloud Run through `get_fast_api_app` |
+| Data | Elasticsearch | The hackathon's Elastic track; fuzzy product search and ES\|QL aggregations in one place |
+| Integration | Official Elastic MCP server on Cloud Run, `es_mcp_server.py` locally | Same five read-only tools over HTTP or stdio |
 
-## Why a single orchestrating LlmAgent
+## How the agent uses each tool
 
-The build plan considered a `SequentialAgent` pipeline (lookup → analyze → report). That forces every query through a product lookup, which is wrong for category/brand/discovery queries. Instead, one `LlmAgent` carries six explicit playbooks in its instruction and lets Gemini select the right tool sequence per query type. Fewer moving parts, no agent-transfer failure modes, and the multi-step behavior is still fully visible in the trace.
+| Tool | Used for |
+|---|---|
+| `search` | Product lookups (fuzzy `multi_match` on name, brand, description), brand filters, alert lookups |
+| `esql` | Price-per-unit `EVAL`s and `STATS` by brand, category and year |
+| `list_indices` | Answering "what data do you have?" |
+| `get_mappings` | Summarizing fields for the same question |
+| `get_shards` | Only when the user asks about data health |
 
-## Meaningful use of all five Elastic MCP tools
+The prompt names the four indices and their main fields, so the agent doesn't discover its schema. `list_indices` and `get_mappings` are there to answer the user.
 
-| Tool | When | Why it matters |
-|---|---|---|
-| `search` | product lookups, brand filters, alert retrieval | fuzzy `multi_match` over name/brand/description — Elasticsearch's core strength |
-| `esql` | price-per-unit EVALs, `STATS` aggregations by brand/category/year | the analytical engine behind every verdict and ranking |
-| `list_indices` | data-discovery queries, first-run orientation | the agent discovers its data dynamically, nothing hardcoded |
-| `get_mappings` | schema summaries during discovery | schema-aware querying instead of guessed field names |
-| `get_shards` | data health/status questions | production-readiness awareness |
+## Product lookup, step by step
 
-## Request flow (product lookup)
-
-1. `search` products — `multi_match` on `name^3, brand^2, description`, `fuzziness: AUTO` → `product_id`
-2. `esql` — `FROM product_history | WHERE product_id == "<id>" | EVAL ppu = price / size | SORT record_date ASC`
-3. `search` shrinkflation_alerts by `product_id` → verified event + source
-4. Gemini synthesizes: size change, effective price increase, severity (🟢🟡🔴), consumer tip, one suggested follow-up
-
-## Deployment topology (Cloud Run)
-
-Two services: `elastic-mcp` (official image in HTTP mode, holds ES credentials) and `shrinkflation-sleuth` (this repo's container; FastAPI app serving the ADK chat UI and API). The agent reaches the MCP service via `ELASTIC_MCP_URL`. Locally, with `ELASTIC_MCP_URL` unset, the agent spawns `agents/shrinkflation_sleuth/es_mcp_server.py` over stdio. It is a small FastMCP server that wraps the Elasticsearch Python client and exposes the same five tools, so no Docker is needed.
-
-
+1. `search` products: `multi_match` on `name^3, brand^2, description`, `fuzziness: AUTO`. This gives the `product_id`.
+2. `esql`: `FROM product_history | WHERE product_id == "<id>" | EVAL ppu = price / size | SORT record_date ASC`
+3. `search` shrinkflation_alerts by `product_id` for the documented change and its source.
+4. Gemini writes the answer: size change, effective price increase, severity (🟢🟡🔴), a tip, and one suggested next check.
