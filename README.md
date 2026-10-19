@@ -1,5 +1,7 @@
 # Shrinkflation Sleuth
 
+**[Portfolio](https://shawnjoshua03.github.io/)**
+
 [![CI](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml/badge.svg)](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml)
 
 A Gemini agent that checks whether a grocery product has shrunk and works out how much more you now pay per unit. I built it for the [Google Cloud Rapid Agent Hackathon](https://rapid-agent.devpost.com/) (Elastic track) in three days, with Google ADK, Gemini, Elasticsearch and the Elastic MCP server.
