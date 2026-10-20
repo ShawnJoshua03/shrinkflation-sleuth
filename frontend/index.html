@@ -32,11 +32,9 @@
       <div class="hero-top">
         <div>
           <h1 id="hero-title">Same price,<br>smaller bag.</h1>
-          <p class="lede">Shrinkflation Sleuth is a Gemini agent that looks up a
-            product's documented size changes and works out how much more you now pay
-            per ounce. Each size cut links to the report it came from.</p>
+          <p class="lede">A Gemini agent that checks documented size cuts and shows the price per ounce you now pay, with sources.</p>
           <div class="cta-row">
-            <a class="btn primary" href="#explorer">Try the explorer</a>
+            <a class="btn primary" href="#explorer">Run an investigation</a>
             <a class="btn" href="https://github.com/ShawnJoshua03/shrinkflation-sleuth" rel="noopener">View on GitHub</a>
           </div>
         </div>
@@ -66,7 +64,64 @@
           <figcaption>The same bag as a shelf tag, before and after the size cut. Price per ounce is the sticker price divided by the size.</figcaption>
         </figure>
       </div>
+    </div>
+  </section>
 
+  <section id="explorer" aria-labelledby="explorer-title">
+    <div class="wrap">
+      <h2 id="explorer-title">Run the agent's playbooks yourself</h2>
+      <p class="note-lead">The real agent has Gemini plan Elasticsearch queries. This explorer runs the same playbooks in your browser over the same documents, so no API key is needed. Each result lists the tool calls the agent makes.</p>
+      <p id="explorer-status" class="note"></p>
+
+      <div class="tabs" role="tablist" aria-label="Investigations">
+        <button role="tab" data-tab="lookup" aria-selected="true">Product</button>
+        <button role="tab" data-tab="brand" aria-selected="false">Brand</button>
+        <button role="tab" data-tab="category" aria-selected="false">Category</button>
+        <button role="tab" data-tab="list" aria-selected="false">Shopping list</button>
+        <button role="tab" data-tab="trends" aria-selected="false">Trends</button>
+      </div>
+
+      <div class="panel" role="tabpanel" id="panel-lookup">
+        <div class="controls">
+        <form id="lookup-form">
+          <label for="lookup-q" class="sr">Product</label>
+          <input id="lookup-q" value="Has my Doritos bag shrunk?" autocomplete="off" placeholder="Ask about a product…">
+          <button class="btn primary">Investigate</button>
+        </form>
+        <div class="chips" aria-label="Examples">
+          <button class="chip" type="button">Tropicana orange juice</button>
+          <button class="chip" type="button">Charmin toilet paper</button>
+          <button class="chip" type="button">gatorade</button>
+          <button class="chip" type="button">Coca-Cola 12-pack</button>
+          <button class="chip" type="button">Oreos</button>
+        </div>
+        </div>
+        <div id="out-lookup" aria-live="polite"></div>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-brand" hidden>
+        <form id="brand-form"><label for="brand-select" class="sr">Brand</label><select id="brand-select"></select></form>
+        <div id="out-brand"></div>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-category" hidden><div id="out-category"></div></div>
+      <div class="panel" role="tabpanel" id="panel-list" hidden>
+        <form id="list-form">
+          <label for="list-q" class="sr">Shopping list</label>
+          <textarea id="list-q">Doritos, Charmin, Tide pods, Folgers coffee, Quaker oats, Oreos</textarea>
+          <button class="btn primary">Audit list</button>
+        </form>
+        <div id="out-list"></div>
+      </div>
+      <div class="panel" role="tabpanel" id="panel-trends" hidden><div id="out-trends"></div></div>
+
+      <p id="stat-line" class="note" aria-live="polite"></p>
+      <p class="note">Demo data: 34 products curated from public shrinkflation reports (FullCarts, Mouseprint,
+        ShrinkWatch, Capital One Shopping research). Sizes and dates follow the reports; prices are representative,
+        not live quotes. Reddit-only reports are marked unverified. <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth#data--methodology">Methodology</a>.</p>
+    </div>
+  </section>
+
+  <section class="read" aria-label="How to read the example">
+    <div class="wrap">
       <div class="lower">
         <div class="slip" role="img" aria-label="Example report: Doritos Nacho Cheese at Kroger. Size 9.75 oz became 9.25 oz, price $4.99 stayed $4.99, price per ounce $0.51 became $0.54, hidden increase plus 5.4 percent, source FullCarts.">
           <p class="sub" aria-hidden="true">Example report</p>
@@ -99,75 +154,22 @@
     </div>
   </section>
 
-  <section id="explorer" aria-labelledby="explorer-title">
+  <section id="ask" aria-labelledby="ask-title">
     <div class="wrap">
-      <h2 id="explorer-title">Run the agent's playbooks yourself</h2>
-      <p class="note-lead">The real agent uses Gemini to plan Elasticsearch queries. This explorer runs the same
-        playbooks deterministically in your browser over the exact documents the agent queries, so no API key is needed.
-        Each result shows the tool calls the agent makes for it.</p>
-      <p id="stat-line" class="note" aria-live="polite"></p>
-      <p id="explorer-status" class="note"></p>
-
-      <div class="tabs" role="tablist" aria-label="Investigations">
-        <button role="tab" data-tab="lookup" aria-selected="true">Product</button>
-        <button role="tab" data-tab="brand" aria-selected="false">Brand</button>
-        <button role="tab" data-tab="category" aria-selected="false">Category</button>
-        <button role="tab" data-tab="list" aria-selected="false">Shopping list</button>
-        <button role="tab" data-tab="trends" aria-selected="false">Trends</button>
+      <h2 id="ask-title">Six investigations, one agent</h2>
+      <p class="note-lead">With the full agent you ask in plain English and Gemini picks the playbook. Pick one to run it above.</p>
+      <div class="cards">
+        <a class="card feat wide" href="#explorer" data-go="lookup"><span class="no">01</span><h3>Product lookup</h3><p class="ask">Has my Doritos bag gotten smaller?</p><p>Size history, price-per-unit trend, verdict.</p><span class="go">Run it &rarr;</span></a>
+        <a class="card" href="#explorer" data-go="brand"><span class="no">02</span><h3>Brand investigation</h3><p class="ask">Show me all shrinkflation from Frito-Lay</p><p>Products ranked by shrinkage, via an ES|QL aggregation.</p><span class="go">Run it &rarr;</span></a>
+        <a class="card" href="#explorer" data-go="category"><span class="no">03</span><h3>Category analysis</h3><p class="ask">Which category has the worst shrinkflation?</p><p>Average shrinkage per category and the worst three products.</p><span class="go">Run it &rarr;</span></a>
+        <a class="card alert wide" href="#explorer" data-go="list"><span class="no">04</span><h3>Shopping list audit</h3><p class="ask">Check these: Doritos, Charmin, Tide, Oreos</p><p>Each item checked, plus the total hidden cost.</p><span class="go">Run it &rarr;</span></a>
+        <a class="card" href="#explorer" data-go="trends"><span class="no">05</span><h3>Trend dashboard</h3><p class="ask">What are the worst trends this year?</p><p>The ten biggest cuts and a count per year.</p><span class="go">Run it &rarr;</span></a>
+        <a class="card ghost wide" href="#how"><span class="no">06</span><h3>Data discovery</h3><p class="ask">What data do you have?</p><p>Lists the indices and reads their mappings. Needs the full agent, so see how it works.</p><span class="go">How it works &rarr;</span></a>
       </div>
-
-      <div class="panel" role="tabpanel" id="panel-lookup">
-        <form id="lookup-form">
-          <label for="lookup-q" class="sr">Product</label>
-          <input id="lookup-q" value="Has my Doritos bag gotten smaller?" autocomplete="off" placeholder="Ask about a product…">
-          <button class="btn primary">Investigate</button>
-        </form>
-        <div class="chips" aria-label="Examples">
-          <button class="chip" type="button">Tropicana orange juice</button>
-          <button class="chip" type="button">Charmin toilet paper</button>
-          <button class="chip" type="button">gatorade</button>
-          <button class="chip" type="button">Coca-Cola 12-pack</button>
-          <button class="chip" type="button">Oreos</button>
-        </div>
-        <div id="out-lookup"></div>
-      </div>
-      <div class="panel" role="tabpanel" id="panel-brand" hidden>
-        <form id="brand-form"><label for="brand-select" class="sr">Brand</label><select id="brand-select"></select></form>
-        <div id="out-brand"></div>
-      </div>
-      <div class="panel" role="tabpanel" id="panel-category" hidden><div id="out-category"></div></div>
-      <div class="panel" role="tabpanel" id="panel-list" hidden>
-        <form id="list-form">
-          <label for="list-q" class="sr">Shopping list</label>
-          <textarea id="list-q">Doritos, Charmin, Tide pods, Folgers coffee, Quaker oats, Oreos</textarea>
-          <button class="btn primary">Audit list</button>
-        </form>
-        <div id="out-list"></div>
-      </div>
-      <div class="panel" role="tabpanel" id="panel-trends" hidden><div id="out-trends"></div></div>
-
-      <p class="note">Demo data: 34 products curated from public shrinkflation reports (FullCarts, Mouseprint,
-        ShrinkWatch, Capital One Shopping research). Sizes and dates follow the reports; prices are representative,
-        not live quotes. Reddit-only reports are marked unverified. <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth#data--methodology">Methodology</a>.</p>
     </div>
   </section>
 
-  <section id="ask" aria-labelledby="ask-title" class="field">
-    <div class="wrap">
-      <h2 id="ask-title">Questions the full agent handles</h2>
-      <p class="note-lead">With the full agent you ask in plain English and Gemini picks the playbook.</p>
-      <ul class="asks">
-        <li><p class="ask">Has my Doritos bag gotten smaller?</p><p class="a">Product lookup: size history, price-per-unit trend, verdict.</p></li>
-        <li><p class="ask">Show me all shrinkflation from Frito-Lay</p><p class="a">Brand investigation: products ranked by shrinkage, via an ES|QL aggregation.</p></li>
-        <li><p class="ask">Which category has the worst shrinkflation?</p><p class="a">Category analysis: average shrinkage per category and the worst three products.</p></li>
-        <li><p class="ask">Check these: Doritos, Charmin, Tide, Oreos</p><p class="a">Shopping list audit: each item checked, plus the total hidden cost.</p></li>
-        <li><p class="ask">What are the worst trends this year?</p><p class="a">Trend dashboard: the ten biggest cuts and a count per year.</p></li>
-        <li><p class="ask">What data do you have?</p><p class="a">Data discovery: lists the indices and reads their mappings.</p></li>
-      </ul>
-    </div>
-  </section>
-
-  <section id="how" aria-labelledby="how-title">
+  <section id="how" aria-labelledby="how-title" class="field">
     <div class="wrap how">
       <h2 id="how-title">One Gemini agent, five read-only MCP tools</h2>
       <p>Built with Gemini Flash on Google ADK,

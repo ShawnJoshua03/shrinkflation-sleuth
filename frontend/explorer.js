@@ -75,73 +75,114 @@
   const agentBox = (code) =>
     `<details class="agent"><summary>What the agent runs for this</summary><pre>${esc(code.trim())}</pre></details>`;
 
-  // Price per unit over time, as an SVG step line.
-  function ppuChart(hist, alert) {
-    const W = 640, H = 210, L = 92, R = 16, T = 18, B = 30;
+  // Price per unit over time, as an SVG step line. Sized to the real container
+  // width so the type stays readable on a phone. The hidden increase at the size
+  // cut is shaded and labelled directly.
+  function ppuChart(hist, alert, width) {
+    const narrow = width < 520;
+    const W = Math.max(280, Math.round(width)), H = narrow ? 230 : 280;
+    const L = narrow ? 84 : 96, R = narrow ? 30 : 30, T = 30, B = 34;
     const t = (d) => new Date(d).getTime();
     const xs = hist.map((h) => t(h.record_date)), ys = hist.map((h) => h.price_per_unit);
     const [x0, x1] = [Math.min(...xs), Math.max(...xs)];
-    const pad = (Math.max(...ys) - Math.min(...ys)) * 0.25 || Math.max(...ys) * 0.05;
+    const pad = (Math.max(...ys) - Math.min(...ys)) * 0.3 || Math.max(...ys) * 0.05;
     const [y0, y1] = [Math.min(...ys) - pad, Math.max(...ys) + pad];
     const X = (v) => L + ((v - x0) / (x1 - x0 || 1)) * (W - L - R);
     const Y = (v) => T + (1 - (v - y0) / (y1 - y0)) * (H - T - B);
     let d = `M${X(xs[0])},${Y(ys[0])}`;
     for (let i = 1; i < xs.length; i++) d += ` H${X(xs[i])} V${Y(ys[i])}`;
     const unit = hist[0].size_unit;
+    const ci = alert ? hist.findIndex((h) => h.record_date === alert.date_changed) : -1;
+    let gap = "", labels = "";
+    if (ci > 0) {
+      const before = hist[ci - 1], after = hist[ci];
+      const xc = X(xs[ci]), xe = ci + 1 < xs.length ? X(xs[ci + 1]) : W - R;
+      const yb = Y(before.price_per_unit), ya = Y(after.price_per_unit);
+      gap = `<rect x="${xc}" y="${ya}" width="${xe - xc}" height="${Math.max(2, yb - ya)}" class="gap"/>
+        <line x1="${xc}" x2="${xe}" y1="${yb}" y2="${yb}" class="ref"/>
+        ${xe - xc > 40 ? `<text x="${narrow ? xc + 8 : (xc + xe) / 2}" y="${(ya + yb) / 2 + 5}" class="gaplbl${narrow ? " s" : ""}">${pct(alert.effective_price_increase_pct)}${narrow ? "" : " hidden"}</text>` : ""}`;
+      if (!narrow) {
+        labels = `<text x="${xc - 8}" y="${yb - 12}" class="l e">${before.size} ${esc(unit)}, ${ppu(before.price_per_unit, unit)}</text>
+          <text x="${xc - 10}" y="${ya - 14}" class="l e">${after.size} ${esc(unit)}, ${ppu(after.price_per_unit, unit)}</text>`;
+      }
+    }
     const dots = hist.map((h, i) => {
-      const cut = alert && h.record_date === alert.date_changed;
-      return `<circle cx="${X(xs[i])}" cy="${Y(ys[i])}" r="${cut ? 6 : 4}" class="${cut ? "cut" : "pt"}">
+      const cut = i === ci;
+      return `<circle cx="${X(xs[i])}" cy="${Y(ys[i])}" r="${cut ? 7 : 5}" class="${cut ? "cut" : "pt"}">
         <title>${esc(h.record_date)}: ${h.size} ${esc(unit)} @ ${money(h.price)} = ${ppu(h.price_per_unit, unit)}</title></circle>`;
     }).join("");
-    // Label each record's year under its point (records are about a year apart).
     const xl = hist.map((h, i) => `<text x="${X(xs[i])}" y="${H - 8}">${h.record_date.slice(0, 4)}</text>`).join("");
-    const cutHist = alert && hist.find((h) => h.record_date === alert.date_changed);
-    const cutLabel = cutHist
-      ? `<text x="${X(t(cutHist.record_date))}" y="${Y(cutHist.price_per_unit) - 12}" class="cutlbl">size cut</text>` : "";
-    return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Price per ${esc(unit)} over time">
-      <text x="${L - 8}" y="${Y(y1 - pad) + 4}" class="yl">${ppu(y1 - pad, unit)}</text>
-      <text x="${L - 8}" y="${Y(y0 + pad) + 4}" class="yl">${ppu(y0 + pad, unit)}</text>
+    const hi = y1 - pad, lo = y0 + pad;
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="chart" role="img" aria-label="Price per ${esc(unit)} over time">
+      <line x1="${L}" x2="${W - R}" y1="${Y(hi)}" y2="${Y(hi)}" class="grid"/>
+      <line x1="${L}" x2="${W - R}" y1="${Y(lo)}" y2="${Y(lo)}" class="grid"/>
+      <text x="${L - 8}" y="${Y(hi) + 5}" class="yl">${ppu(hi, unit)}</text>
+      <text x="${L - 8}" y="${Y(lo) + 5}" class="yl">${ppu(lo, unit)}</text>
       <line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" class="base"/>
-      <path d="${d}" class="line"/>${dots}${xl}${cutLabel}</svg>`;
+      ${gap}<path d="${d}" class="line"/>${dots}${labels}${xl}</svg>`;
   }
 
-  // Playbook 1: product lookup
-  function renderProduct(p, others = []) {
+  // Phone-width stand-in for the direct labels: a before/after bar pair, drawn from zero.
+  function pairBars(a, unit) {
+    const oldP = a.old_price / a.old_size, newP = a.new_price / a.new_size;
+    return `<div class="pair">
+      <div><p class="lbl">Before: ${a.old_size} ${esc(unit)}, ${ppu(oldP, unit)}</p>
+        <div class="track"><span class="b1" style="--w1:${(oldP / newP) * 100}%"></span></div></div>
+      <div><p class="lbl">After: ${a.new_size} ${esc(unit)}, ${ppu(newP, unit)}</p>
+        <div class="track"><span class="b1" style="--w1:${(oldP / newP) * 100}%"></span><span class="b2" style="--w2:${(1 - oldP / newP) * 100}%"></span></div></div>
+    </div>`;
+  }
+
+  let CURRENT = null; // the product report on screen, so it can be redrawn on resize
+  const chartWidth = () => Math.min(900, ($("#panel-lookup").clientWidth || 640) - 44);
+
+  // Playbook 1: product lookup, laid out as a thermal receipt
+  function renderProduct(p, others = [], wOverride) {
     const hist = historyOf(p.product_id);
     const a = alertOf(p.product_id);
     const unit = p.current_size_unit;
-    let findings;
+    const w = wOverride || chartWidth();
+    let i = 0;
+    const line = (k, v) => `<div class="rl" style="--i:${i++}"><span>${k}</span><span>${v}</span></div>`;
+    let rows, total;
     if (a) {
       const oldPpu = a.old_price / a.old_size, newPpu = a.new_price / a.new_size;
-      findings = `
-        <div class="verdict bad">Shrinkflation, ${esc(a.severity)} severity</div>
-        <dl class="facts">
-          <dt>Size change</dt><dd><s>${a.old_size} ${esc(unit)}</s> → <b>${a.new_size} ${esc(unit)}</b> (−${a.shrinkage_pct.toFixed(1)}%) on ${esc(a.date_changed)}</dd>
-          <dt>Price impact</dt><dd>${money(a.old_price)} → ${money(a.new_price)} sticker · ${ppu(oldPpu, unit)} → ${ppu(newPpu, unit)}</dd>
-          <dt>Effective price increase</dt><dd class="big">${pct(a.effective_price_increase_pct)}</dd>
-          <dt>Evidence</dt><dd>${verifiedBadge(a)}</dd>
-        </dl>
-        <p class="tip">${TIPS[a.severity]}</p>`;
+      rows = line("Size", `<s>${a.old_size} ${esc(unit)}</s> → <b>${a.new_size} ${esc(unit)}</b> (−${a.shrinkage_pct.toFixed(1)}%)`) +
+        line("Price", `${money(a.old_price)} → ${money(a.new_price)}`) +
+        line(`Per ${esc(unit)}`, `<s>${ppu(oldPpu, unit)}</s> → <b>${ppu(newPpu, unit)}</b>`) +
+        line("Changed", esc(a.date_changed)) +
+        line("Evidence", verifiedBadge(a));
+      const ti = i;
+      total = `<div class="rtotal"><div class="lab" style="--i:${ti}">Hidden increase<small>price per ${esc(unit)}, same sticker price</small></div>
+        <div style="text-align:right"><div class="num" style="--i:${ti + 1}">${pct(a.effective_price_increase_pct)}</div>
+        <div class="verdict bad" style="--i:${ti + 2}">Shrinkflation · ${esc(a.severity)}</div></div></div>`;
+      i = ti + 3;
     } else {
       const first = hist[0], last = hist[hist.length - 1];
       const drift = ((last.price_per_unit - first.price_per_unit) / first.price_per_unit) * 100;
-      findings = `
-        <div class="verdict good">No size change on record</div>
-        <dl class="facts">
-          <dt>Size</dt><dd>${p.current_size} ${esc(unit)} since ${esc(first.record_date)}</dd>
-          <dt>Price-per-unit drift</dt><dd>${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)}), an ordinary price change with no size cut</dd>
-        </dl>
-        <p class="tip">${TIPS.none}</p>`;
+      rows = line("Size", `${p.current_size} ${esc(unit)} since ${esc(first.record_date)}`) +
+        line(`Per ${esc(unit)}`, `${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)})`);
+      const ti = i;
+      total = `<div class="rtotal ok"><div class="lab" style="--i:${ti}">Verdict<small>an ordinary price change with no size cut</small></div>
+        <div class="num" style="--i:${ti + 1}">No size change</div></div>`;
+      i = ti + 2;
     }
     const alsoMatched = others.length
       ? `<p class="also">Also matched: ${others.map((o) => `<button class="link" data-pid="${esc(o.product_id)}">${esc(o.name)}</button>`).join(", ")}</p>` : "";
+    const narrow = w < 520;
+    CURRENT = { p, others, w };
     return `
       <article class="report">
-        <header><h4>${esc(p.name)}</h4><span class="meta">${esc(p.brand)}, ${esc(p.category)}, ${esc(p.retailer)}</span></header>
-        ${findings}
-        ${ppuChart(hist, a)}
-        <p class="next">Next check: <button class="link" data-brand="${esc(p.brand)}">all ${esc(p.brand)} products</button></p>
-        ${alsoMatched}
+        <div class="rbar"><span class="t">SLEUTH REPORT</span><span class="n">${esc(p.name)}<small>${esc(p.brand)} · ${esc(p.retailer)}</small></span></div>
+        <div class="rbody">
+          ${rows}${total}
+          <div class="after" style="--i:${i}">
+            <p class="tip">${TIPS[a ? a.severity : "none"]}</p>
+            <div class="chartwrap"><h5>Price per ${esc(unit)} over time</h5>${ppuChart(hist, a, w)}${a && narrow ? pairBars(a, unit) : ""}</div>
+            <p class="next">Next check: <button class="link" data-brand="${esc(p.brand)}">all ${esc(p.brand)} products</button></p>
+            ${alsoMatched}
+          </div>
+        </div>
       </article>
       ${agentBox(`
 search  products  {"multi_match": {"query": "…", "fields": ["name^3","brand^2","description"], "fuzziness": "AUTO"}}
@@ -150,11 +191,24 @@ esql    FROM product_history | WHERE product_id == "${p.product_id}"
 search  shrinkflation_alerts  {"term": {"product_id": "${p.product_id}"}}`)}`;
   }
 
-  function lookup(query) {
+  // Show a product report; `animate` prints it line by line like a thermal receipt.
+  function showProduct(p, others, animate = true) {
+    const out = $("#out-lookup");
+    out.innerHTML = renderProduct(p, others);
+    const cw = $(".chartwrap", out);
+    if (cw && Math.abs(cw.clientWidth - CURRENT.w) > 3) out.innerHTML = renderProduct(p, others, cw.clientWidth);
+    const rep = $(".report", out);
+    if (animate) {
+      rep.classList.add("printing");
+      rep.addEventListener("animationend", (e) => { if (e.target.closest(".after")) rep.classList.remove("printing"); }, { once: true });
+    }
+  }
+
+  function lookup(query, animate = true) {
     const hits = search(query);
-    $("#out-lookup").innerHTML = hits.length
-      ? renderProduct(hits[0], hits.slice(1))
-      : `<p class="empty">I don't have data on “${esc(query)}” yet. Try a related brand or category, or pick one of the examples.</p>`;
+    if (hits.length) { showProduct(hits[0], hits.slice(1), animate); return; }
+    CURRENT = null;
+    $("#out-lookup").innerHTML = `<p class="empty">I don't have data on “${esc(query)}” yet. Try a related brand or category, or pick one of the examples.</p>`;
   }
 
   // Playbook 2: brand investigation
@@ -278,7 +332,18 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
       if (!b) return;
       if (b.dataset.brand) selectBrand(b.dataset.brand);
       else if (b.dataset.cat) renderCategories(b.dataset.cat);
-      else if (b.dataset.pid) $("#out-lookup").innerHTML = renderProduct(DB.products.find((p) => p.product_id === b.dataset.pid));
+      else if (b.dataset.pid) showProduct(DB.products.find((p) => p.product_id === b.dataset.pid), []);
+    });
+
+    document.querySelectorAll("[data-go]").forEach((c) => c.addEventListener("click", () => showTab(c.dataset.go)));
+    let rt;
+    window.addEventListener("resize", () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        if (CURRENT && !$("#panel-lookup").hidden && Math.abs(chartWidth() - CURRENT.w) > 8) {
+          showProduct(CURRENT.p, CURRENT.others, false);
+        }
+      }, 150);
     });
 
     lookup($("#lookup-q").value);
