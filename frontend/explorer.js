@@ -114,7 +114,7 @@
     if (a) {
       const oldPpu = a.old_price / a.old_size, newPpu = a.new_price / a.new_size;
       findings = `
-        <div class="verdict bad">SHRINKFLATION · ${a.severity.toUpperCase()}</div>
+        <div class="verdict bad">Shrinkflation, ${esc(a.severity)} severity</div>
         <dl class="facts">
           <dt>Size change</dt><dd><s>${a.old_size} ${esc(unit)}</s> → <b>${a.new_size} ${esc(unit)}</b> (−${a.shrinkage_pct.toFixed(1)}%) on ${esc(a.date_changed)}</dd>
           <dt>Price impact</dt><dd>${money(a.old_price)} → ${money(a.new_price)} sticker · ${ppu(oldPpu, unit)} → ${ppu(newPpu, unit)}</dd>
@@ -126,7 +126,7 @@
       const first = hist[0], last = hist[hist.length - 1];
       const drift = ((last.price_per_unit - first.price_per_unit) / first.price_per_unit) * 100;
       findings = `
-        <div class="verdict good">NO SIZE CHANGE ON RECORD</div>
+        <div class="verdict good">No size change on record</div>
         <dl class="facts">
           <dt>Size</dt><dd>${p.current_size} ${esc(unit)} since ${esc(first.record_date)}</dd>
           <dt>Price-per-unit drift</dt><dd>${ppu(first.price_per_unit, unit)} → ${ppu(last.price_per_unit, unit)} (${pct(drift)}), an ordinary price change with no size cut</dd>
@@ -134,13 +134,13 @@
         <p class="tip">${TIPS.none}</p>`;
     }
     const alsoMatched = others.length
-      ? `<p class="also">Also matched: ${others.map((o) => `<button class="link" data-pid="${esc(o.product_id)}">${esc(o.name)}</button>`).join(" · ")}</p>` : "";
+      ? `<p class="also">Also matched: ${others.map((o) => `<button class="link" data-pid="${esc(o.product_id)}">${esc(o.name)}</button>`).join(", ")}</p>` : "";
     return `
       <article class="report">
-        <header><h4>${esc(p.name)}</h4><span class="meta">${esc(p.brand)} · ${esc(p.category)} · ${esc(p.retailer)}</span></header>
+        <header><h4>${esc(p.name)}</h4><span class="meta">${esc(p.brand)}, ${esc(p.category)}, ${esc(p.retailer)}</span></header>
         ${findings}
         ${ppuChart(hist, a)}
-        <p class="next">Next check → <button class="link" data-brand="${esc(p.brand)}">all ${esc(p.brand)} products</button></p>
+        <p class="next">Next check: <button class="link" data-brand="${esc(p.brand)}">all ${esc(p.brand)} products</button></p>
         ${alsoMatched}
       </article>
       ${agentBox(`
@@ -263,8 +263,8 @@ esql  FROM shrinkflation_alerts | WHERE verified == true
     const brands = [...new Set(DB.products.map((p) => p.brand))].sort();
     $("#brand-select").innerHTML = brands.map((b) => `<option>${esc(b)}</option>`).join("");
     $("#stat-line").textContent =
-      `${DB.products.length} products · ${DB.product_history.length} history records · ` +
-      `${DB.shrinkflation_alerts.length} documented size cuts · ${DB.categories.length} categories`;
+      `${DB.products.length} products, ${DB.product_history.length} history records, ` +
+      `${DB.shrinkflation_alerts.length} documented size cuts, ${DB.categories.length} categories`;
 
     $("#lookup-form").addEventListener("submit", (e) => { e.preventDefault(); lookup($("#lookup-q").value); });
     $("#list-form").addEventListener("submit", (e) => { e.preventDefault(); renderList($("#list-q").value); });
