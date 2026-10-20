@@ -8,241 +8,104 @@
 <meta property="og:title" content="Shrinkflation Sleuth">
 <meta property="og:description" content="The hidden price-per-unit increase on 34 grocery products, 29 of which shrank.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#F7F6F1">
+<meta name="theme-color" content="#1F4E79">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --paper:#F7F6F1;
-    --ink:#16140F;
-    --stamp:#C8102E;
-    --tag:#FFD23F;
-    --rule:#D8D5CB;
-    --dim:#6E6A5E;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:var(--paper);
-    color:var(--ink);
-    font-family:'Archivo',system-ui,sans-serif;
-    line-height:1.55;
-  }
-  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
-  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
-
-  header{padding:20px 0;border-bottom:1.5px solid var(--ink)}
-  header .wrap{display:flex;justify-content:space-between;align-items:center}
-  .logo{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.05rem;letter-spacing:.02em}
-  .logo span{color:var(--stamp)}
-  nav a{color:var(--ink);text-decoration:none;font-size:.9rem;margin-left:22px;border-bottom:1.5px solid transparent}
-  nav a:hover, nav a:focus-visible{border-bottom-color:var(--stamp);outline:none}
-
-  /* Hero: a thermal receipt that tells the story */
-  .hero{padding:72px 0 56px;display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center}
-  h1{font-weight:800;font-size:clamp(2.1rem,5vw,3.4rem);line-height:1.05;letter-spacing:-.02em}
-  h1 em{font-style:normal;background:var(--tag);padding:0 .12em}
-  .lede{margin-top:18px;font-size:1.05rem;color:var(--dim);max-width:46ch}
-  .cta-row{margin-top:28px;display:flex;gap:14px;flex-wrap:wrap}
-  .btn{display:inline-block;text-decoration:none;font-family:'IBM Plex Mono',monospace;font-weight:700;
-       padding:13px 22px;border:2px solid var(--ink);color:var(--ink);background:var(--paper)}
-  .btn.primary{background:var(--ink);color:var(--paper)}
-  .btn:hover, .btn:focus-visible{background:var(--stamp);border-color:var(--stamp);color:#fff;outline:none}
-
-  .receipt{
-    background:#fff;border:1px solid var(--rule);
-    box-shadow:6px 6px 0 rgba(22,20,15,.12);
-    padding:26px 24px 34px;
-    font-family:'IBM Plex Mono',monospace;font-size:.85rem;
-    position:relative;max-width:340px;justify-self:center;width:100%;
-  }
-  .receipt::after{ /* perforated bottom edge */
-    content:"";position:absolute;left:0;right:0;bottom:-8px;height:8px;
-    background:radial-gradient(circle at 8px -2px, transparent 7px, #fff 7px) repeat-x;
-    background-size:16px 8px;
-  }
-  .receipt h2{font-size:.85rem;text-align:center;letter-spacing:.18em;font-weight:700}
-  .receipt .sub{text-align:center;color:var(--dim);font-size:.72rem;margin-bottom:14px}
-  .rline{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--rule)}
-  .rline .old{text-decoration:line-through;color:var(--dim)}
-  .rline.total{border-bottom:none;border-top:2px solid var(--ink);margin-top:8px;padding-top:8px;font-weight:700}
-  .stamp{
-    position:absolute;top:42%;left:50%;
-    transform:translate(-50%,-50%) rotate(-12deg);
-    border:3px solid var(--stamp);color:var(--stamp);
-    font-weight:700;letter-spacing:.14em;font-size:.95rem;
-    padding:6px 14px;opacity:.92;background:rgba(255,255,255,.7);
-    animation:stamp .5s cubic-bezier(.2,1.6,.4,1) .6s both;
-  }
-  @keyframes stamp{from{transform:translate(-50%,-50%) rotate(-12deg) scale(2.6);opacity:0}
-                   to{transform:translate(-50%,-50%) rotate(-12deg) scale(1);opacity:.92}}
-  @media (prefers-reduced-motion: reduce){.stamp{animation:none}}
-
-  section{padding:56px 0;border-top:1.5px solid var(--ink)}
-  .kicker{font-family:'IBM Plex Mono',monospace;font-size:.75rem;letter-spacing:.2em;
-          text-transform:uppercase;color:var(--stamp);margin-bottom:14px}
-  h3{font-size:1.5rem;font-weight:800;margin-bottom:10px}
-
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1.5px solid var(--ink)}
-  .stat{padding:22px;border-right:1.5px solid var(--ink)}
-  .stat:last-child{border-right:none}
-  .stat b{display:block;font-family:'IBM Plex Mono',monospace;font-size:2rem;font-weight:700}
-  .stat span{font-size:.85rem;color:var(--dim)}
-
-  .queries{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:24px}
-  .q{border:1px solid var(--rule);background:#fff;padding:16px 18px}
-  .q .ask{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:.9rem}
-  .q .ask::before{content:"$ ";color:var(--stamp)}
-  .q p{font-size:.82rem;color:var(--dim);margin-top:6px}
-
-  .flow{font-family:'IBM Plex Mono',monospace;font-size:.85rem;background:#fff;
-        border:1px solid var(--rule);padding:20px;overflow-x:auto;margin-top:20px;white-space:pre}
-
-  /* Explorer */
-  #explorer .lede2{color:var(--dim);max-width:62ch;margin-bottom:6px}
-  #stat-line{font-size:.78rem;color:var(--dim);margin-bottom:18px}
-  .tabs{display:flex;border:1.5px solid var(--ink);border-bottom:none;overflow-x:auto;scrollbar-width:thin}
-  .tabs button{flex:1 0 auto;font:600 .82rem 'IBM Plex Mono',monospace;padding:11px 14px;background:var(--paper);
-    border:none;border-right:1.5px solid var(--ink);cursor:pointer;color:var(--ink);white-space:nowrap}
-  .tabs button:last-child{border-right:none}
-  .tabs button[aria-selected=true]{background:var(--ink);color:var(--paper)}
-  .tabs button:focus-visible{outline:3px solid var(--stamp);outline-offset:-3px}
-  .panel{border:1.5px solid var(--ink);background:#fff;padding:20px;min-height:320px}
-  .panel form{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-  .panel input,.panel select,.panel textarea{font:500 .95rem 'IBM Plex Mono',monospace;padding:10px 12px;
-    border:1.5px solid var(--ink);background:var(--paper);color:var(--ink);flex:1 1 240px;min-width:0}
-  .panel textarea{min-height:64px;resize:vertical}
-  .panel input:focus,.panel select:focus,.panel textarea:focus{outline:3px solid var(--tag);outline-offset:0}
-  .panel .btn{padding:10px 18px;cursor:pointer}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-  .chip{font:.78rem 'IBM Plex Mono',monospace;padding:5px 10px;border:1px solid var(--rule);background:var(--paper);cursor:pointer;color:var(--ink)}
-  .chip:hover,.chip:focus-visible{border-color:var(--stamp);color:var(--stamp);outline:none}
-  .report header{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;padding:0;border:none}
-  .report h4{font-size:1.2rem;font-weight:800}
-  .meta,.dim,.fine{color:var(--dim);font-size:.82rem}
-  .verdict{display:inline-block;font:700 .8rem 'IBM Plex Mono',monospace;letter-spacing:.12em;padding:4px 10px;border:2.5px solid;margin-bottom:12px;transform:rotate(-1.5deg)}
-  .verdict.bad{color:var(--stamp)} .verdict.good{color:#2E6B3A}
-  .facts{display:grid;grid-template-columns:max-content 1fr;gap:6px 16px;font-size:.92rem}
-  .facts dt{font-weight:600}
-  .facts dd.big{font:700 1.5rem 'IBM Plex Mono',monospace;color:var(--stamp);line-height:1.2}
-  .tip{margin-top:12px;font-size:.88rem;background:#FFF8DC;border-left:4px solid var(--tag);padding:8px 12px}
-  .badge{font:.75rem 'IBM Plex Mono',monospace;padding:2px 6px;border:1px solid;white-space:nowrap}
-  .badge.ok{color:#2E6B3A} .badge.warn{color:#8A5A00}
-  .sev-low{color:#2E6B3A} .sev-medium{color:#8A5A00} .sev-high{color:var(--stamp)}
-  .chart{width:100%;height:auto;margin-top:14px;border-top:1px dashed var(--rule)}
-  .chart .line{fill:none;stroke:var(--ink);stroke-width:2.2}
-  .chart .pt{fill:var(--paper);stroke:var(--ink);stroke-width:2}
-  .chart .cut{fill:var(--stamp);stroke:#fff;stroke-width:2}
-  .chart .base{stroke:var(--rule)}
-  .chart text{font:12px 'IBM Plex Mono',monospace;fill:var(--dim);text-anchor:middle}
-  .chart text.yl{text-anchor:end}
-  .chart .cutlbl{fill:var(--stamp);font-weight:700}
-  .next,.also{margin-top:8px;font-size:.88rem}
-  button.link{background:none;border:none;padding:0;font:inherit;color:var(--stamp);text-decoration:underline;cursor:pointer;text-align:left}
-  .empty{color:var(--dim);padding:20px 0}
-  .scroll{overflow-x:auto;margin:6px 0}
-  table{border-collapse:collapse;width:100%;font-size:.86rem}
-  th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
-  th{font:600 .72rem 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);border-bottom:1.5px solid var(--ink)}
-  td.num{font-family:'IBM Plex Mono',monospace;white-space:nowrap}
-  tfoot td{border-top:2px solid var(--ink);border-bottom:none;font-weight:600}
-  tr.sel{background:#FFF8DC}
-  .bar{display:inline-block;height:9px;width:calc(var(--w) * .6);background:var(--stamp);vertical-align:middle;margin-right:6px}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);border:1.5px solid var(--ink);margin-bottom:14px}
-  .kpis div{padding:12px 14px;border-right:1px solid var(--rule)} .kpis div:last-child{border-right:none}
-  .kpis b{display:block;font:700 1.4rem 'IBM Plex Mono',monospace} .kpis span{font-size:.78rem;color:var(--dim)}
-  h5{font:600 .75rem 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--stamp);margin:18px 0 8px}
-  .offenders{padding-left:20px;font-size:.9rem} .offenders li{margin:4px 0}
-  .years{display:flex;gap:10px;align-items:flex-end;height:170px;border-bottom:1.5px solid var(--ink);padding-top:8px}
-  .yr{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.75rem}
-  .yr .col{width:70%;max-width:56px;height:calc(var(--h) * .7);background:var(--ink);position:relative;min-height:4px}
-  .yr .col em{position:absolute;top:-18px;left:0;right:0;text-align:center;font:700 .8rem 'IBM Plex Mono',monospace;font-style:normal}
-  .yr b{font-family:'IBM Plex Mono',monospace;margin-top:4px} .yr small{color:var(--dim)}
-  details.agent{margin-top:16px;border:1px dashed var(--rule);padding:8px 12px;font-size:.82rem}
-  details.agent summary{cursor:pointer;font-family:'IBM Plex Mono',monospace;color:var(--dim)}
-  details.agent pre{margin-top:8px;overflow-x:auto;font:.78rem/1.5 'IBM Plex Mono',monospace;white-space:pre}
-  .note{margin-top:14px;font-size:.82rem;color:var(--dim);max-width:70ch}
-  .note a,footer a{color:inherit}
-  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-
-  footer{border-top:1.5px solid var(--ink);padding:26px 0;font-size:.8rem;color:var(--dim)}
-  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
-
-  @media (max-width:760px){
-    .hero{grid-template-columns:1fr;padding-top:48px}
-    .stats{grid-template-columns:1fr}
-    .stat{border-right:none;border-bottom:1.5px solid var(--ink)}
-    .stat:last-child{border-bottom:none}
-    .queries{grid-template-columns:1fr}
-    .kpis{grid-template-columns:1fr 1fr}
-    .kpis div:nth-child(2){border-right:none}
-    .kpis div:nth-child(-n+2){border-bottom:1px solid var(--rule)}
-    .facts{grid-template-columns:1fr}
-    .facts dt{margin-top:6px}
-    .panel{padding:14px}
-    .wrap{padding:0 16px}
-    nav a{margin-left:14px;white-space:nowrap}
-    .logo{font-size:.9rem}
-    nav a.hide-sm{display:none}
-  }
-</style>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Archivo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<header>
+<header class="site">
   <div class="wrap">
-    <div class="logo">SHRINKFLATION<span>_</span>SLEUTH</div>
-    <nav>
+    <div class="logo">Shrinkflation Sleuth</div>
+    <nav aria-label="Page sections">
       <a href="#how" class="hide-sm">How it works</a>
       <a href="#explorer">Try it</a>
-      <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth" class="mono" rel="noopener">GitHub →</a>
+      <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth" rel="noopener">GitHub</a>
     </nav>
   </div>
 </header>
 
 <main>
-  <div class="wrap hero">
-    <div>
-      <h1>Same price,<br><em>smaller bag.</em></h1>
-      <p class="lede">Shrinkflation Sleuth is a Gemini agent that looks up a
-        product's documented size changes and works out how much more you now pay
-        per ounce. Each size cut links to the report it came from.</p>
-      <div class="cta-row">
-        <a class="btn primary" href="#explorer">Try the explorer</a>
-        <a class="btn" href="https://github.com/ShawnJoshua03/shrinkflation-sleuth" rel="noopener">View on GitHub</a>
-      </div>
-    </div>
-
-    <div class="receipt" aria-label="Example receipt showing a shrinkflation detection">
-      <h2>SLEUTH REPORT</h2>
-      <div class="sub">DORITOS NACHO CHEESE · KROGER</div>
-      <div class="rline"><span>SIZE</span><span><span class="old">9.75 OZ</span> 9.25 OZ</span></div>
-      <div class="rline"><span>PRICE</span><span>$4.99 → $4.99</span></div>
-      <div class="rline"><span>PER OZ</span><span><span class="old">$0.51</span> $0.54</span></div>
-      <div class="rline"><span>SOURCE</span><span>FULLCARTS</span></div>
-      <div class="rline total"><span>HIDDEN INCREASE</span><span>+5.4%</span></div>
-      <div class="stamp">SHRINKFLATION</div>
-    </div>
-  </div>
-
-  <section>
+  <section class="hero" aria-labelledby="hero-title">
     <div class="wrap">
-      <div class="kicker">The numbers</div>
-      <div class="stats">
-        <div class="stat"><b>~33%</b><span>of grocery items affected by shrinkflation (Capital One Shopping research, 2025)</span></div>
-        <div class="stat"><b>+12.2%</b><span>average hidden price-per-unit increase across the 29 documented size cuts in this dataset</span></div>
-        <div class="stat"><b>+25%</b><span>worst case here: Haribo Goldbears, 5 oz → 4 oz at the same $1.99</span></div>
+      <div class="hero-top">
+        <div>
+          <h1 id="hero-title">Same price,<br>smaller bag.</h1>
+          <p class="lede">Shrinkflation Sleuth is a Gemini agent that looks up a
+            product's documented size changes and works out how much more you now pay
+            per ounce. Each size cut links to the report it came from.</p>
+          <div class="cta-row">
+            <a class="btn primary" href="#explorer">Try the explorer</a>
+            <a class="btn" href="https://github.com/ShawnJoshua03/shrinkflation-sleuth" rel="noopener">View on GitHub</a>
+          </div>
+        </div>
+
+        <figure class="shelf">
+          <div class="tags" role="group" aria-label="Shelf tags before and after the size cut">
+            <div class="tag before">
+              <p class="tag-head">Doritos Nacho Cheese Tortilla Chips</p>
+              <div class="tag-body">
+                <p class="tag-state">Before</p>
+                <p class="tag-size">9.75 oz for $4.99</p>
+                <p class="tag-ppu"><span class="big">$0.51</span><span class="unit">per oz</span></p>
+              </div>
+            </div>
+            <p class="same"><b>$4.99</b>same price</p>
+            <div class="tag after">
+              <p class="tag-head">Doritos Nacho Cheese Tortilla Chips</p>
+              <div class="tag-body">
+                <p class="tag-state">After</p>
+                <p class="tag-size">9.25 oz for $4.99</p>
+                <p class="tag-ppu"><span class="big">$0.54</span><span class="unit">per oz</span></p>
+                <p class="tag-note">+5.4% per ounce</p>
+              </div>
+            </div>
+          </div>
+          <div class="rail" aria-hidden="true"></div>
+          <figcaption>The same bag as a shelf tag, before and after the size cut. Price per ounce is the sticker price divided by the size.</figcaption>
+        </figure>
+      </div>
+
+      <div class="lower">
+        <div class="slip" role="img" aria-label="Example report: Doritos Nacho Cheese at Kroger. Size 9.75 oz became 9.25 oz, price $4.99 stayed $4.99, price per ounce $0.51 became $0.54, hidden increase plus 5.4 percent, source FullCarts.">
+          <p class="sub" aria-hidden="true">Example report</p>
+          <p class="slip-title" aria-hidden="true">SLEUTH REPORT</p>
+          <div class="rline" aria-hidden="true"><span>Size</span><span><span class="old">9.75 oz</span> 9.25 oz</span></div>
+          <div class="rline" aria-hidden="true"><span>Price</span><span>$4.99 → $4.99</span></div>
+          <div class="rline" aria-hidden="true"><span>Per oz</span><span><span class="old">$0.51</span> $0.54</span></div>
+          <div class="rline" aria-hidden="true"><span>Source</span><span>FullCarts</span></div>
+          <div class="rline total" aria-hidden="true"><span>Hidden increase</span><span class="alert">+5.4%</span></div>
+          <p class="status" aria-hidden="true">Shrinkflation</p>
+        </div>
+        <div class="how-to">
+          <p>Price per unit is the sticker price divided by the size. At $4.99, 9.75 oz works out to $0.51 an ounce.
+            At 9.25 oz the same $4.99 is $0.54 an ounce. That change in price per ounce is the hidden increase.</p>
+          <p>This is one example from 29 documented size cuts in the demo data, not a typical result. The average
+            across those cuts is in the figures below.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <section id="explorer">
+  <section class="field" aria-labelledby="numbers-title">
     <div class="wrap">
-      <div class="kicker">Live demo · Sleuth Explorer</div>
-      <h3>Run the agent's playbooks yourself</h3>
-      <p class="lede2">The real agent uses Gemini to plan Elasticsearch queries. This explorer runs the same
+      <h2 id="numbers-title">What the data shows</h2>
+      <ul class="figures">
+        <li><b>~33%</b><span>of grocery items affected by shrinkflation (Capital One Shopping research, 2025)</span></li>
+        <li><b>+12.2%</b><span>average hidden price-per-unit increase across the 29 documented size cuts in this dataset</span></li>
+        <li><b>+25%</b><span>worst case here: Haribo Goldbears, 5 oz → 4 oz at the same $1.99</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="explorer" aria-labelledby="explorer-title">
+    <div class="wrap">
+      <h2 id="explorer-title">Run the agent's playbooks yourself</h2>
+      <p class="note-lead">The real agent uses Gemini to plan Elasticsearch queries. This explorer runs the same
         playbooks deterministically in your browser over the exact documents the agent queries, so no API key is needed.
         Each result shows the tool calls the agent makes for it.</p>
-      <p id="stat-line" class="mono" aria-live="polite"></p>
+      <p id="stat-line" class="note" aria-live="polite"></p>
       <p id="explorer-status" class="note"></p>
 
       <div class="tabs" role="tablist" aria-label="Investigations">
@@ -289,31 +152,29 @@
     </div>
   </section>
 
-  <section id="ask">
+  <section id="ask" aria-labelledby="ask-title" class="field">
     <div class="wrap">
-      <div class="kicker">What to ask</div>
-      <h3>Questions the full agent handles</h3>
-      <p style="max-width:60ch;color:var(--dim)">With the full agent you ask in plain English and Gemini picks the playbook.</p>
-      <div class="queries">
-        <div class="q"><div class="ask">Has my Doritos bag gotten smaller?</div><p>Product lookup: size history, price-per-unit trend, verdict.</p></div>
-        <div class="q"><div class="ask">Show me all shrinkflation from Frito-Lay</div><p>Brand investigation: products ranked by shrinkage, via an ES|QL aggregation.</p></div>
-        <div class="q"><div class="ask">Which category has the worst shrinkflation?</div><p>Category analysis: average shrinkage per category and the worst three products.</p></div>
-        <div class="q"><div class="ask">Check these: Doritos, Charmin, Tide, Oreos</div><p>Shopping list audit: each item checked, plus the total hidden cost.</p></div>
-        <div class="q"><div class="ask">What are the worst trends this year?</div><p>Trend dashboard: the ten biggest cuts and a count per year.</p></div>
-        <div class="q"><div class="ask">What data do you have?</div><p>Data discovery: lists the indices and reads their mappings.</p></div>
-      </div>
+      <h2 id="ask-title">Questions the full agent handles</h2>
+      <p class="note-lead">With the full agent you ask in plain English and Gemini picks the playbook.</p>
+      <ul class="asks">
+        <li><p class="ask">Has my Doritos bag gotten smaller?</p><p class="a">Product lookup: size history, price-per-unit trend, verdict.</p></li>
+        <li><p class="ask">Show me all shrinkflation from Frito-Lay</p><p class="a">Brand investigation: products ranked by shrinkage, via an ES|QL aggregation.</p></li>
+        <li><p class="ask">Which category has the worst shrinkflation?</p><p class="a">Category analysis: average shrinkage per category and the worst three products.</p></li>
+        <li><p class="ask">Check these: Doritos, Charmin, Tide, Oreos</p><p class="a">Shopping list audit: each item checked, plus the total hidden cost.</p></li>
+        <li><p class="ask">What are the worst trends this year?</p><p class="a">Trend dashboard: the ten biggest cuts and a count per year.</p></li>
+        <li><p class="ask">What data do you have?</p><p class="a">Data discovery: lists the indices and reads their mappings.</p></li>
+      </ul>
     </div>
   </section>
 
-  <section id="how">
-    <div class="wrap">
-      <div class="kicker">How it works</div>
-      <h3>One Gemini agent, five read-only MCP tools</h3>
-      <p style="max-width:60ch;color:var(--dim)">Built with Gemini Flash on Google ADK,
+  <section id="how" aria-labelledby="how-title">
+    <div class="wrap how">
+      <h2 id="how-title">One Gemini agent, five read-only MCP tools</h2>
+      <p>Built with Gemini Flash on Google ADK,
         connected to Elasticsearch through the official Elastic MCP server. A product
         question takes three tool calls: search for the product, pull its history
         with ES|QL, then look up the documented size change.</p>
-      <div class="flow">USER ──► GEMINI FLASH (ADK agent)
+      <pre class="flow">USER ──► GEMINI FLASH (ADK agent)
               │ plans steps, picks tools
               ▼
       ELASTIC MCP SERVER
@@ -324,8 +185,8 @@
       └─ get_shards      shard status
               │
               ▼
-      ELASTICSEARCH  (products · product_history · shrinkflation_alerts · categories)</div>
-      <p class="note">Running the full agent needs an Elasticsearch cluster and a Gemini key;
+      ELASTICSEARCH  (products · product_history · shrinkflation_alerts · categories)</pre>
+      <p class="fine">Running the full agent needs an Elasticsearch cluster and a Gemini key;
         see the <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth#quickstart">quickstart</a>.</p>
     </div>
   </section>
@@ -333,7 +194,7 @@
 
 <footer>
   <div class="wrap">
-    <span>Built for the Google Cloud Rapid Agent Hackathon · Elastic Track · 2026 · <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth">Source (Apache-2.0)</a></span>
+    <span>Built for the Google Cloud Rapid Agent Hackathon, Elastic Track, 2026. <a href="https://github.com/ShawnJoshua03/shrinkflation-sleuth">Source (Apache-2.0)</a></span>
     <span>Not affiliated with any brand or retailer named. Informational only.</span>
   </div>
 </footer>
