@@ -1,14 +1,26 @@
+<div align="center">
+
 # Shrinkflation Sleuth
+
+**A Gemini agent that checks whether a grocery product has shrunk and works out how much more you now pay per unit.**
+
+[![CI](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml/badge.svg)](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
+![Google ADK](https://img.shields.io/badge/Google%20ADK-4285F4?logo=google&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-8E75B2?logo=googlegemini&logoColor=white)
+![Elasticsearch](https://img.shields.io/badge/Elasticsearch-005571?logo=elasticsearch&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+[![Live demo](https://img.shields.io/badge/Live%20demo-open-2ea44f)](https://shawnjoshua03.github.io/shrinkflation-sleuth/)
+[![Write-up](https://img.shields.io/badge/Write--up-read-blue)](https://shawnjoshua03.github.io/stories/shrinkflation-sleuth/)
+
+[![Sleuth Explorer: product lookup showing the Doritos size cut and +5.4% hidden price increase](https://shawnjoshua03.github.io/images/shrinkflation-sleuth.jpg)](https://shawnjoshua03.github.io/shrinkflation-sleuth/#explorer)
 
 **[Portfolio](https://shawnjoshua03.github.io/)**
 
-[![CI](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml/badge.svg)](https://github.com/ShawnJoshua03/shrinkflation-sleuth/actions/workflows/ci.yml)
+</div>
 
-A Gemini agent that checks whether a grocery product has shrunk and works out how much more you now pay per unit. I built it for the [Google Cloud Rapid Agent Hackathon](https://rapid-agent.devpost.com/) (Elastic track) in three days, with Google ADK, Gemini, Elasticsearch and the Elastic MCP server.
-
-**[Live demo](https://shawnjoshua03.github.io/shrinkflation-sleuth/)**
-
-[![Sleuth Explorer: product lookup showing the Doritos size cut and +5.4% hidden price increase](docs/img/explorer.png)](https://shawnjoshua03.github.io/shrinkflation-sleuth/#explorer)
+I built it for the [Google Cloud Rapid Agent Hackathon](https://rapid-agent.devpost.com/) (Elastic track) in three days, with Google ADK, Gemini, Elasticsearch and the Elastic MCP server.
 
 Shrinkflation is when a product gets smaller and the price stays the same. It's an economic idea that has interested me for a long time. A lot of companies use it to make any tiny bit of extra profit they can, and a smaller bag at the same price is easy to miss. Capital One Shopping research estimates it has touched roughly a third of grocery items. The number that shows it is the price per ounce, so that's what this agent reports.
 
