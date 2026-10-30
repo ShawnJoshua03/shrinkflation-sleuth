@@ -8,9 +8,10 @@
 <meta property="og:title" content="Shrinkflation Sleuth">
 <meta property="og:description" content="The hidden price-per-unit increase on 34 grocery products, 29 of which shrank.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#1F4E79">
+<meta name="theme-color" content="#E9E2CE">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Archivo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Six+Caps&family=Bevan&family=Archivo+Narrow:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,7 +32,7 @@
     <div class="wrap">
       <div class="hero-top">
         <div>
-          <h1 id="hero-title">Same price,<br>smaller bag.</h1>
+          <h1 id="hero-title"><span class="fit">Same price,</span> <span class="fit">smaller bag.</span></h1>
           <p class="lede">A Gemini agent that checks documented size cuts and shows the price per ounce you now pay, with sources.</p>
           <div class="cta-row">
             <a class="btn primary" href="#explorer">Run an investigation</a>
@@ -69,7 +70,7 @@
 
   <section id="explorer" aria-labelledby="explorer-title">
     <div class="wrap">
-      <h2 id="explorer-title">Run the agent's playbooks yourself</h2>
+      <h2 id="explorer-title">Run the agent’s playbooks yourself</h2>
       <p class="note-lead">The real agent has Gemini plan Elasticsearch queries. This explorer runs the same playbooks in your browser over the same documents, so no API key is needed. Each result lists the tool calls the agent makes.</p>
       <p id="explorer-status" class="note"></p>
 
